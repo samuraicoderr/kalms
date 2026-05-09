@@ -32,6 +32,10 @@ const appConfig = {
   fonts: {
     logoFont: '/fonts/Bobbleboddy.ttf',
   },
+
+  backgrounds: {
+    authScreens: '/backgrounds/auth-screen-bg.png',
+  }
 } as const;
 
 export default appConfig;

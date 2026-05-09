@@ -1,0 +1,352 @@
+/*
+ * defaults.css
+ * Drop this in and import it after your Tailwind imports.
+ * Fixes all the stuff Tailwind's preflight strips or never adds.
+ *
+ * Usage (v3):  import after @tailwind utilities
+ * Usage (v4):  import after @import "tailwindcss"
+ */
+
+@layer base {
+
+  /* ─────────────────────────────────────────────
+   * 1. CURSOR
+   * Tailwind v4 removed cursor:pointer from buttons.
+   * Browsers never add it to [role="button"] either.
+   * Disabled elements should not show pointer.
+   * ───────────────────────────────────────────── */
+  button:not(:disabled),
+  [role="button"]:not(:disabled),
+  [type="button"]:not(:disabled),
+  [type="submit"]:not(:disabled),
+  [type="reset"]:not(:disabled),
+  label[for],
+  select:not(:disabled),
+  summary {
+    cursor: pointer;
+  }
+
+  :disabled,
+  [aria-disabled="true"] {
+    cursor: not-allowed;
+  }
+
+
+  /* ─────────────────────────────────────────────
+   * 2. LINKS
+   * Preflight strips all <a> color and decoration.
+   * Restore sensible defaults that you can override
+   * per-component. Visited colour stays distinct.
+   * ───────────────────────────────────────────── */
+  a {
+    color: inherit;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  a:hover {
+    text-decoration-thickness: 2px;
+  }
+
+
+  /* ─────────────────────────────────────────────
+   * 3. FOCUS VISIBLE
+   * Don't nuke focus for mouse users but keep it
+   * crystal-clear for keyboard users.
+   * Preflight removes all outlines; nothing puts
+   * them back unless you add focus: classes to
+   * every single interactive element.
+   * ───────────────────────────────────────────── */
+  :focus {
+    outline: none; /* remove ugly default, rely on :focus-visible */
+  }
+
+  :focus-visible {
+    outline: 2px solid currentColor;
+    outline-offset: 2px;
+  }
+
+
+  /* ─────────────────────────────────────────────
+   * 4. FORM INPUTS
+   * Preflight resets borders to 0. Bare <input>,
+   * <textarea>, <select> are essentially invisible
+   * without explicit Tailwind classes on every one.
+   * ───────────────────────────────────────────── */
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]),
+  textarea,
+  select {
+    border-width: 1px;
+    border-style: solid;
+    border-color: rgb(209 213 219); /* gray-300 */
+    border-radius: 0.375rem;        /* rounded-md */
+    padding: 0.375rem 0.625rem;
+    background-color: transparent;
+    font-size: inherit;
+    line-height: inherit;
+    color: inherit;
+    width: 100%;
+  }
+
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]):focus-visible,
+  textarea:focus-visible,
+  select:focus-visible {
+    outline: 2px solid rgb(99 102 241); /* indigo-500 */
+    outline-offset: 0;
+    border-color: rgb(99 102 241);
+  }
+
+  /* Remove the inner spin buttons on number inputs */
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  input[type="number"] {
+    -moz-appearance: textfield;
+  }
+
+  /* Remove the clear (×) button IE/Edge adds */
+  input::-ms-clear,
+  input::-ms-reveal {
+    display: none;
+  }
+
+  /* Make search inputs look like regular text inputs */
+  input[type="search"]::-webkit-search-decoration,
+  input[type="search"]::-webkit-search-cancel-button,
+  input[type="search"]::-webkit-search-results-button,
+  input[type="search"]::-webkit-search-results-decoration {
+    -webkit-appearance: none;
+  }
+
+
+  /* ─────────────────────────────────────────────
+   * 5. SELECT — appearance
+   * Preflight doesn't restore the native dropdown
+   * arrow when you go custom. Keep appearance:auto
+   * so the arrow stays unless you opt out with
+   * the Tailwind `appearance-none` class.
+   * ───────────────────────────────────────────── */
+  select {
+    appearance: auto;
+    background-image: none; /* in case a base layer adds one */
+  }
+
+
+  /* ─────────────────────────────────────────────
+   * 6. TEXTAREA
+   * Restrict resize to vertical only — horizontal
+   * resizing breaks most layouts.
+   * ───────────────────────────────────────────── */
+  textarea {
+    resize: vertical;
+    min-height: 4rem;
+  }
+
+
+  /* ─────────────────────────────────────────────
+   * 7. DISABLED STATES
+   * Browsers inconsistently apply opacity to
+   * disabled inputs vs selects. Normalise to 0.5
+   * across the board and block interactions.
+   * ───────────────────────────────────────────── */
+  :disabled,
+  [aria-disabled="true"] {
+    opacity: 0.5;
+    pointer-events: none;
+    user-select: none;
+  }
+
+
+  /* ─────────────────────────────────────────────
+   * 8. CHECKBOX & RADIO
+   * Preflight nukes sizing. Give them a sensible
+   * default size and pointer without full reset.
+   * ───────────────────────────────────────────── */
+  [type="checkbox"],
+  [type="radio"] {
+    width: 1rem;
+    height: 1rem;
+    cursor: pointer;
+    accent-color: rgb(99 102 241); /* indigo-500 */
+    flex-shrink: 0;
+  }
+
+
+  /* ─────────────────────────────────────────────
+   * 9. LISTS
+   * Preflight strips list-style, margin, and padding
+   * from ol/ul. Fine inside nav/ui components,
+   * awful inside prose. Use `.list-prose` to opt
+   * back in, or use the @tailwindcss/typography plugin.
+   * ───────────────────────────────────────────── */
+  .list-prose ul,
+  .prose ul {
+    list-style-type: disc;
+    padding-left: 1.5rem;
+    margin-top: 0.5rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .list-prose ol,
+  .prose ol {
+    list-style-type: decimal;
+    padding-left: 1.5rem;
+    margin-top: 0.5rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .list-prose li,
+  .prose li {
+    margin-top: 0.25rem;
+    margin-bottom: 0.25rem;
+  }
+
+
+  /* ─────────────────────────────────────────────
+   * 10. HEADINGS
+   * Preflight makes all headings the same size as
+   * body text. Restore semantic sizing as a base
+   * (still easy to override with Tailwind classes).
+   * ───────────────────────────────────────────── */
+  h1 { font-size: 2rem;    line-height: 1.2; font-weight: 700; }
+  h2 { font-size: 1.5rem;  line-height: 1.25; font-weight: 700; }
+  h3 { font-size: 1.25rem; line-height: 1.3;  font-weight: 600; }
+  h4 { font-size: 1.125rem;line-height: 1.35; font-weight: 600; }
+  h5 { font-size: 1rem;    line-height: 1.4;  font-weight: 600; }
+  h6 { font-size: 0.875rem;line-height: 1.4;  font-weight: 600; }
+
+
+  /* ─────────────────────────────────────────────
+   * 11. IMAGES
+   * Preflight makes images block; prevent them from
+   * stretching in flex containers unless told to.
+   * ───────────────────────────────────────────── */
+  img,
+  video {
+    max-width: 100%;
+    height: auto;
+  }
+
+
+  /* ─────────────────────────────────────────────
+   * 12. TABLE
+   * Preflight resets nothing on tables. Add sensible
+   * collapse and full-width defaults.
+   * ───────────────────────────────────────────── */
+  table {
+    border-collapse: collapse;
+    width: 100%;
+  }
+
+  th {
+    text-align: left;
+    font-weight: 600;
+  }
+
+
+  /* ─────────────────────────────────────────────
+   * 13. CODE / PRE
+   * Preflight strips font-family from code. Restore
+   * a readable monospace stack and don't let pre
+   * overflow silently.
+   * ───────────────────────────────────────────── */
+  code,
+  kbd,
+  samp,
+  pre {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+      "Liberation Mono", "Courier New", monospace;
+    font-size: 0.875em;
+  }
+
+  pre {
+    overflow-x: auto;
+    white-space: pre;
+  }
+
+
+  /* ─────────────────────────────────────────────
+   * 14. DIALOG
+   * Browsers style <dialog> inconsistently.
+   * ───────────────────────────────────────────── */
+  dialog {
+    padding: 1.5rem;
+    border-radius: 0.5rem;
+    border: 1px solid rgb(229 231 235); /* gray-200 */
+    box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1),
+                0 8px 10px -6px rgb(0 0 0 / 0.1);
+    max-width: 90vw;
+  }
+
+  dialog::backdrop {
+    background-color: rgb(0 0 0 / 0.5);
+  }
+
+
+  /* ─────────────────────────────────────────────
+   * 15. DETAILS / SUMMARY
+   * <details> / <summary> get no love from preflight.
+   * ───────────────────────────────────────────── */
+  details > summary {
+    list-style: none;       /* hide the default triangle in Firefox */
+  }
+
+  details > summary::-webkit-details-marker {
+    display: none;          /* hide the default triangle in Chrome/Safari */
+  }
+
+
+  /* ─────────────────────────────────────────────
+   * 16. SCROLLBAR (WebKit)
+   * Tailwind adds nothing here. Thin, neutral scrollbars
+   * that don't eat layout space.
+   * ───────────────────────────────────────────── */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: rgb(156 163 175) transparent; /* gray-400 / transparent */
+  }
+
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background-color: rgb(156 163 175); /* gray-400 */
+    border-radius: 9999px;
+  }
+
+
+  /* ─────────────────────────────────────────────
+   * 17. SELECTION
+   * Browser default selection colour is fine but
+   * set something consistent here if you want.
+   * ───────────────────────────────────────────── */
+  ::selection {
+    background-color: rgb(199 210 254); /* indigo-200 */
+    color: inherit;
+  }
+
+
+  /* ─────────────────────────────────────────────
+   * 18. REDUCED MOTION
+   * Respect the OS setting. Always.
+   * ───────────────────────────────────────────── */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    ::before,
+    ::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+
+}

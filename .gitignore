@@ -1,0 +1,5 @@
+.research/
+a.*
+frontend-before/
+*.log
+bash.exe.stackdump

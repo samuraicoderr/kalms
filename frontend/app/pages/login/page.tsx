@@ -1,18 +1,10 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import {
-  Mail,
-  Lock,
-  Eye,
-  EyeOff,
-  ArrowRight,
-  Sparkles,
-  Shield,
-  Heart,
-  Loader2,
-} from "lucide-react";
+import { Eye, EyeOff, ArrowRight, Loader2 } from "lucide-react";
+import Image from "next/image";
+import appConfig from "@/lib/appconfig";
 
 // ─── Types ───────────────────────────────────────────────
 interface LoginFormData {
@@ -31,96 +23,57 @@ const containerVariants = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
-    transition: {
-      staggerChildren: 0.08,
-      delayChildren: 0.1,
-    },
+    transition: { staggerChildren: 0.06, delayChildren: 0.15 },
   },
 };
 
 const itemVariants = {
-  hidden: { opacity: 0, y: 20 },
+  hidden: { opacity: 0, y: 16 },
   visible: {
     opacity: 1,
     y: 0,
-    transition: {
-      type: "spring",
-      stiffness: 300,
-      damping: 24,
-    },
+    transition: { type: "spring", stiffness: 350, damping: 28 },
   },
 };
 
-const logoVariants = {
-  hidden: { scale: 0.8, opacity: 0 },
+const fadeSlideIn = {
+  hidden: { opacity: 0, x: 40 },
   visible: {
-    scale: 1,
     opacity: 1,
-    transition: {
-      type: "spring",
-      stiffness: 200,
-      damping: 15,
-    },
+    x: 0,
+    transition: { type: "spring", stiffness: 300, damping: 30, delay: 0.2 },
   },
 };
 
-// ─── Kalms Brand Logo SVG ────────────────────────────────
-const KalmsLogo = ({ className = "" }: { className?: string }) => (
-  <svg
-    viewBox="0 0 120 32"
-    fill="none"
-    xmlns="http://www.w3.org/2000/svg"
-    className={className}
-    aria-label="Kalms"
-  >
-    <path
-      d="M12 8L4 16L12 24"
-      stroke="currentColor"
-      strokeWidth="2.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-    <path
-      d="M24 8L32 16L24 24"
-      stroke="currentColor"
-      strokeWidth="2.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-    <path
-      d="M18 6L14 26"
-      stroke="currentColor"
-      strokeWidth="2.5"
-      strokeLinecap="round"
-    />
-    <text
-      x="42"
-      y="22"
-      fill="currentColor"
-      fontFamily="Inter, sans-serif"
-      fontSize="20"
-      fontWeight="700"
-    >
-      Kalms
-    </text>
-  </svg>
-);
+// ─── Hero Slides Data ────────────────────────────────────
+const heroSlides = [
+  {
+    title: "Your mental health matters.",
+    body: "Kalms helps you track your mood, understand your patterns, and find calm — all in one safe space.",
+  },
+  {
+    title: "Check in, breathe out.",
+    body: "Daily wellness check-ins designed to reduce stress and help you stay emotionally balanced.",
+  },
+  {
+    title: "AI companion, human care.",
+    body: "Get supportive guidance from Kalms AI, backed by evidence-based mental health practices.",
+  },
+];
 
 // ─── Input Component ─────────────────────────────────────
-interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+interface InputFieldProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label: string;
-  icon: React.ReactNode;
   error?: string;
 }
 
 const InputField = ({
   label,
-  icon,
   error,
   type = "text",
   className = "",
   ...props
-}: InputProps) => {
+}: InputFieldProps) => {
   const [showPassword, setShowPassword] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
   const isPassword = type === "password";
@@ -128,27 +81,20 @@ const InputField = ({
 
   return (
     <motion.div variants={itemVariants} className="w-full">
-      <label className="block text-sm font-medium text-[#111827] mb-2">
+      <label className="block text-xs font-medium text-black/60 mb-1.5 tracking-wide">
         {label}
       </label>
       <div className="relative">
-        <div
-          className={`absolute left-4 top-1/2 -translate-y-1/2 transition-colors duration-200 ${
-            isFocused ? "text-[#3a0c8a]" : "text-[#9ca3af]"
-          }`}
-        >
-          {icon}
-        </div>
         <input
           type={inputType}
           className={`
-            w-full rounded-[18px] border bg-white py-[14px] pr-4 pl-12
-            text-[16px] text-[#111827] placeholder:text-[#9ca3af]
+            w-full rounded-[12px] border bg-[#f8fafc] py-3 pr-4 pl-4
+            text-[15px] text-black/60 placeholder:text-black/60
             transition-all duration-200 outline-none
             ${
               error
-                ? "border-[#ef4444] focus:border-[#ef4444] focus:shadow-[0_0_0_4px_rgba(239,68,68,0.1)]"
-                : "border-[#e5e7eb] focus:border-[#3a0c8a] focus:shadow-[0_0_0_4px_rgba(58,12,138,0.1)]"
+                ? "border-[#ef4444] focus:border-[#ef4444] focus:shadow-[0_0_0_3px_rgba(239,68,68,0.08)]"
+                : "border-[#e5e7eb] focus:border-primary focus:bg-white focus:shadow-[0_0_0_3px_rgba(var(--primary-rgb),0.08)]"
             }
             ${className}
           `}
@@ -160,10 +106,10 @@ const InputField = ({
           <button
             type="button"
             onClick={() => setShowPassword(!showPassword)}
-            className="absolute right-4 top-1/2 -translate-y-1/2 text-[#9ca3af] hover:text-[#6b7280] transition-colors"
+            className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#9ca3af] hover:text-[#6b7280] transition-colors"
             tabIndex={-1}
           >
-            {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+            {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
           </button>
         )}
       </div>
@@ -173,7 +119,7 @@ const InputField = ({
             initial={{ opacity: 0, y: -4 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -4 }}
-            className="mt-1.5 text-sm text-[#ef4444]"
+            className="mt-1.5 text-xs text-[#ef4444]"
           >
             {error}
           </motion.p>
@@ -183,18 +129,112 @@ const InputField = ({
   );
 };
 
-// ─── Trust Badge Component ───────────────────────────────
-const TrustBadge = ({ icon, text }: { icon: React.ReactNode; text: string }) => (
-  <motion.div
-    variants={itemVariants}
-    className="flex items-center gap-2 text-sm text-[#6b7280]"
+// ─── Toggle Switch Component ─────────────────────────────
+const ToggleSwitch = ({
+  checked,
+  onChange,
+}: {
+  checked: boolean;
+  onChange: (v: boolean) => void;
+}) => (
+  <button
+    type="button"
+    role="switch"
+    aria-checked={checked}
+    onClick={() => onChange(!checked)}
+    className={`
+      relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent
+      transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2
+      ${checked ? "bg-primary" : "bg-primary-strong"}
+    `}
   >
-    <div className="flex items-center justify-center w-5 h-5 rounded-full bg-[#dcfce7] text-[#22c55e]">
-      {icon}
-    </div>
-    <span>{text}</span>
-  </motion.div>
+    <span
+      className={`
+        pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0
+        transition duration-200 ease-in-out
+        ${checked ? "translate-x-4" : "translate-x-0"}
+      `}
+    />
+  </button>
 );
+
+// ─── Hero Panel Component ────────────────────────────────
+const HeroPanel = () => {
+  const [activeSlide, setActiveSlide] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setActiveSlide((prev) => (prev + 1) % heroSlides.length);
+    }, 6000);
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <motion.div
+      variants={fadeSlideIn}
+      initial="hidden"
+      animate="visible"
+      className="hidden lg:flex relative w-full h-full flex-col justify-end overflow-hidden rounded-[24px] bg-[#0a0a0f]"
+      style={{
+        backgroundImage: `url(${appConfig.backgrounds.authScreens})`,
+        backgroundPosition: "top left",
+        backgroundSize: "cover",
+        backgroundRepeat: "no-repeat",
+      }}
+    >
+      <div className="absolute inset-0 bg-black/45" />
+      {/* Abstract gradient background */}
+      <div className="absolute inset-0">
+        <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-gradient-to-bl from-[#3a0c8a] via-[#6d28d9] to-transparent opacity-40 blur-3xl" />
+        <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-gradient-to-tr from-[#1e1b4b] via-[#312e81] to-transparent opacity-50 blur-3xl" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-gradient-to-br from-[#7c3aed] to-[#3b82f6] opacity-20 blur-[100px]" />
+        {/* Subtle noise texture overlay */}
+        <div
+          className="absolute inset-0 opacity-[0.03]"
+          style={{
+            backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`,
+          }}
+        />
+      </div>
+
+      {/* Content */}
+      <div className="relative z-10 p-[3vw] pb-[3vw]">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={activeSlide}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.5, ease: "easeOut" }}
+            className="mb-8"
+          >
+            <h2 className="text-[4.5vw] font-bold text-white leading-tight mb-4">
+              {heroSlides[activeSlide].title}
+            </h2>
+            <p className="text-[1.2vw] text-white/70 leading-relaxed max-w-[90%]">
+              {heroSlides[activeSlide].body}
+            </p>
+          </motion.div>
+        </AnimatePresence>
+
+        {/* Dots */}
+        <div className="flex items-center justify-center gap-3">
+          {heroSlides.map((_, i) => (
+            <button
+              key={i}
+              onClick={() => setActiveSlide(i)}
+              className={`
+                h-[1vw] rounded-full transition-all duration-300
+                ${i === activeSlide ? "w-[5vw] bg-white" : "w-[1vw] bg-white/30 hover:bg-white/50"}
+              `}
+              aria-label={`Go to slide ${i + 1}`}
+            />
+          ))}
+        </div>
+      </div>
+    </motion.div>
+  );
+};
 
 // ─── Main Login Page ─────────────────────────────────────
 export default function LoginPage({
@@ -242,55 +282,41 @@ export default function LoginPage({
   };
 
   return (
-    <div className="min-h-screen w-full bg-[#f8fafc] flex items-center justify-center p-4 sm:p-6 lg:p-8">
-      {/* Background ambient gradients */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-96 h-96 bg-[#ede7ff] rounded-full blur-3xl opacity-60" />
-        <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-[#dbeafe] rounded-full blur-3xl opacity-60" />
-      </div>
-
-      <div className="w-full max-w-[420px] relative z-10">
-        {/* Logo Section */}
-        <motion.div
-          variants={logoVariants}
-          initial="hidden"
-          animate="visible"
-          className="flex justify-center mb-8"
-        >
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-[#3a0c8a] flex items-center justify-center">
-              <KalmsLogo className="w-6 h-6 text-white" />
-            </div>
-            <span className="text-2xl font-bold text-[#3a0c8a] tracking-tight">
-              Kalms
-            </span>
-          </div>
-        </motion.div>
-
-        {/* Main Card */}
+    <div className="min-h-screen w-full bg-white flex">
+      {/* Left: Form Panel */}
+      <div className="w-full lg:w-1/2 xl:w-[45%] relative flex flex-col justify-center items-center px-6 sm:px-12 lg:px-16 xl:px-24 py-12">
+        <div className="absolute top-20 left-1/2 -translate-x-1/2 flex items-center gap-3">
+          <Image
+            src={appConfig.logos.green_svg}
+            alt={appConfig.appName}
+            width={48}
+            height={48}
+            className="w-12 h-12"
+            priority
+          />
+          <span className="logo-font text-2xl font-bold tracking-tight">
+            {appConfig.appName}
+          </span>
+        </div>
         <motion.div
           variants={containerVariants}
           initial="hidden"
           animate="visible"
-          className="bg-white rounded-[24px] border border-[#e5e7eb] p-6 sm:p-8"
+          className="w-full max-w-[400px] pt-16"
         >
           {/* Header */}
-          <motion.div variants={itemVariants} className="text-center mb-8">
-            <h1 className="text-[24px] font-semibold text-[#111827] mb-2">
-              Welcome back
+          <motion.div variants={itemVariants} className="mb-8">
+            <h1 className="text-[22px] font-semibold cook-font">
+              Welcome Back !
             </h1>
-            <p className="text-[16px] text-[#6b7280]">
-              Sign in to continue your wellness journey
-            </p>
           </motion.div>
 
           {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-5">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <InputField
-              label="Email address"
-              icon={<Mail size={20} />}
+              label="Email"
               type="email"
-              placeholder="you@university.edu"
+              placeholder="Email or phone number"
               value={formData.email}
               onChange={(e) => {
                 setFormData((prev) => ({ ...prev, email: e.target.value }));
@@ -303,9 +329,8 @@ export default function LoginPage({
 
             <InputField
               label="Password"
-              icon={<Lock size={20} />}
               type="password"
-              placeholder="Enter your password"
+              placeholder="Enter password"
               value={formData.password}
               onChange={(e) => {
                 setFormData((prev) => ({ ...prev, password: e.target.value }));
@@ -318,53 +343,19 @@ export default function LoginPage({
             {/* Remember & Forgot */}
             <motion.div
               variants={itemVariants}
-              className="flex items-center justify-between"
+              className="flex items-center justify-between pt-1"
             >
-              <label className="flex items-center gap-2.5 cursor-pointer group">
-                <div
-                  className={`
-                    relative w-5 h-5 rounded-[6px] border-2 transition-all duration-200
-                    flex items-center justify-center
-                    ${
-                      rememberMe
-                        ? "bg-[#3a0c8a] border-[#3a0c8a]"
-                        : "border-[#d1d5db] group-hover:border-[#3a0c8a]"
-                    }
-                  `}
-                >
-                  <input
-                    type="checkbox"
-                    className="sr-only"
-                    checked={rememberMe}
-                    onChange={(e) => setRememberMe(e.target.checked)}
-                  />
-                  {rememberMe && (
-                    <motion.svg
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      className="w-3 h-3 text-white"
-                      viewBox="0 0 12 12"
-                      fill="none"
-                    >
-                      <path
-                        d="M2 6L5 9L10 3"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </motion.svg>
-                  )}
-                </div>
-                <span className="text-sm text-[#6b7280] select-none">
+              <div className="flex items-center gap-2.5">
+                <ToggleSwitch checked={rememberMe} onChange={setRememberMe} />
+                <span className="text-xs text-black/60 select-none">
                   Remember me
                 </span>
-              </label>
+              </div>
 
               <button
                 type="button"
                 onClick={onForgotPassword}
-                className="text-sm font-medium text-[#3a0c8a] hover:text-[#4c13b5] transition-colors"
+                className="text-xs font-medium text-primary hover:text-primary-strong transition-colors"
               >
                 Forgot password?
               </button>
@@ -373,51 +364,44 @@ export default function LoginPage({
             {/* Submit Button */}
             <motion.button
               variants={itemVariants}
-              whileHover={{ scale: 1.01, boxShadow: "0 12px 40px rgba(58,12,138,0.15)" }}
+              whileHover={{ scale: 1.01 }}
               whileTap={{ scale: 0.98 }}
               type="submit"
               disabled={isLoading}
               className={`
-                w-full rounded-[999px] py-[14px] px-6
-                bg-[#3a0c8a] text-white font-medium text-[16px]
+                w-full rounded-[12px] py-3 px-6 mt-2
+                bg-primary text-white font-medium text-[15px]
                 flex items-center justify-center gap-2
                 transition-all duration-200
-                hover:bg-[#4c13b5]
+                hover:bg-primary-strong
                 disabled:opacity-70 disabled:cursor-not-allowed
-                shadow-[0_8px_30px_rgba(58,12,138,0.12)]
+                shadow-[0_4px_14px_rgba(var(--primary-rgb),0.25)]
               `}
             >
               {isLoading ? (
                 <>
-                  <Loader2 size={20} className="animate-spin" />
+                  <Loader2 size={18} className="animate-spin" />
                   <span>Signing in...</span>
                 </>
               ) : (
-                <>
-                  <span>Sign in</span>
-                  <ArrowRight size={18} />
-                </>
+                <span>Sign in</span>
               )}
             </motion.button>
-          </form>
 
-          {/* Divider */}
-          <motion.div variants={itemVariants} className="relative my-6">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-[#e5e7eb]" />
-            </div>
-            <div className="relative flex justify-center">
-              <span className="bg-white px-4 text-sm text-[#9ca3af]">
-                or continue with
-              </span>
-            </div>
-          </motion.div>
-
-          {/* SSO Buttons */}
-          <motion.div variants={itemVariants} className="grid grid-cols-2 gap-3">
-            <button
+            {/* Google SSO */}
+            <motion.button
+              variants={itemVariants}
+              whileHover={{ scale: 1.01 }}
+              whileTap={{ scale: 0.98 }}
               type="button"
-              className="flex items-center justify-center gap-2 rounded-[18px] border border-[#e5e7eb] bg-white py-3 px-4 text-sm font-medium text-[#374151] hover:bg-[#f9fafb] hover:border-[#d1d5db] transition-all duration-200"
+              className="
+                w-full rounded-[12px] py-3 px-6
+                bg-white text-black/60 font-medium text-[15px]
+                flex items-center justify-center gap-2.5
+                border border-[#e5e7eb]
+                transition-all duration-200
+                hover:bg-[#f9fafb] hover:border-[#d1d5db]
+              "
             >
               <svg className="w-5 h-5" viewBox="0 0 24 24">
                 <path
@@ -437,54 +421,29 @@ export default function LoginPage({
                   d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
                 />
               </svg>
-              Google
-            </button>
-            <button
-              type="button"
-              className="flex items-center justify-center gap-2 rounded-[18px] border border-[#e5e7eb] bg-white py-3 px-4 text-sm font-medium text-[#374151] hover:bg-[#f9fafb] hover:border-[#d1d5db] transition-all duration-200"
-            >
-              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M12 0C5.373 0 0 5.373 0 12c0 5.302 3.438 9.8 8.207 11.387.6.11.793-.26.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.09-.745.083-.73.083-.73 1.205.085 1.84 1.237 1.84 1.237 1.07 1.835 2.807 1.305 3.492.998.108-.776.42-1.305.763-1.605-2.665-.305-5.467-1.334-5.467-5.93 0-1.31.468-2.382 1.235-3.22-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.3 1.23A11.51 11.51 0 0112 5.803c1.02.005 2.047.138 3.006.404 2.29-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.838 1.233 1.91 1.233 3.22 0 4.61-2.807 5.625-5.48 5.92.43.372.823 1.102.823 2.222v3.293c0 .32.192.694.801.576C20.565 21.795 24 17.298 24 12c0-6.627-5.373-12-12-12z" />
-              </svg>
-              GitHub
-            </button>
-          </motion.div>
+              Sign in with Google
+            </motion.button>
+          </form>
 
-          {/* Trust Indicators */}
-          <motion.div
+          {/* Footer */}
+          <motion.p
             variants={itemVariants}
-            className="mt-6 pt-6 border-t border-[#f3f4f6] space-y-2.5"
+            className="text-center mt-8 text-xs text-black/60"
           >
-            <TrustBadge
-              icon={<Shield size={12} />}
-              text="End-to-end encrypted"
-            />
-            <TrustBadge
-              icon={<Heart size={12} />}
-              text="FERPA & HIPAA compliant"
-            />
-            <TrustBadge
-              icon={<Sparkles size={12} />}
-              text="AI-powered, human-guided"
-            />
-          </motion.div>
+            Don't have an account?{" "}
+            <button
+              onClick={onSignUp}
+              className="font-semibold text-primary hover:text-primary-strong transition-colors"
+            >
+              Sign up now
+            </button>
+          </motion.p>
         </motion.div>
+      </div>
 
-        {/* Footer */}
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.8, duration: 0.5 }}
-          className="text-center mt-6 text-sm text-[#6b7280]"
-        >
-          Don't have an account?{" "}
-          <button
-            onClick={onSignUp}
-            className="font-medium text-[#3a0c8a] hover:text-[#4c13b5] transition-colors"
-          >
-            Get started
-          </button>
-        </motion.p>
+      {/* Right: Hero Panel */}
+      <div className="hidden lg:block w-1/2 xl:w-[55%] p-4 pl-0">
+        <HeroPanel />
       </div>
     </div>
   );
