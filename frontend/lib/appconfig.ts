@@ -35,6 +35,7 @@ const appConfig = {
 
   backgrounds: {
     authScreens: '/backgrounds/auth-screen-bg.png',
+    cloudBackground: '/backgrounds/cloud-bg.png',
   }
 } as const;
 

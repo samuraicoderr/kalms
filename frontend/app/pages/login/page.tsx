@@ -174,7 +174,7 @@ const HeroPanel = () => {
       variants={fadeSlideIn}
       initial="hidden"
       animate="visible"
-      className="hidden lg:flex relative w-full h-full flex-col justify-end overflow-hidden rounded-[24px] bg-[#0a0a0f]"
+      className="hero-pan hidden lg:flex relative w-full h-full flex-col justify-end overflow-hidden rounded-[24px] bg-[#0a0a0f]"
       style={{
         backgroundImage: `url(${appConfig.backgrounds.authScreens})`,
         backgroundPosition: "top left",
@@ -197,8 +197,16 @@ const HeroPanel = () => {
         />
       </div>
 
+      <div className="absolute top-[18%] left-[50%] translate-x-[-50%] opacity-[90%] flex items-center justify-center">
+        <img
+          src={appConfig.logos.white_svg}
+          alt="Kalms Logo"
+          className="object-contain w-[10vw] hidden"
+        />
+      </div>
+
       {/* Content */}
-      <div className="relative z-10 p-[3vw] pb-[3vw]">
+      <div className="relative z-10 px-[3vw] pb-[3vw]">
         <AnimatePresence mode="wait">
           <motion.div
             key={activeSlide}
@@ -208,7 +216,7 @@ const HeroPanel = () => {
             transition={{ duration: 0.5, ease: "easeOut" }}
             className="mb-8"
           >
-            <h2 className="text-[4.5vw] font-bold text-white leading-tight mb-4">
+            <h2 className="text-[4vw] font-bold text-white leading-tight mb-4">
               {heroSlides[activeSlide].title}
             </h2>
             <p className="text-[1.2vw] text-white/70 leading-relaxed max-w-[90%]">
@@ -225,7 +233,7 @@ const HeroPanel = () => {
               onClick={() => setActiveSlide(i)}
               className={`
                 h-[1vw] rounded-full transition-all duration-300
-                ${i === activeSlide ? "w-[5vw] bg-white" : "w-[1vw] bg-white/30 hover:bg-white/50"}
+                ${i === activeSlide ? "w-[3vw] bg-white" : "w-[1vw] bg-white/30 hover:bg-white/50"}
               `}
               aria-label={`Go to slide ${i + 1}`}
             />
@@ -284,7 +292,7 @@ export default function LoginPage({
   return (
     <div className="min-h-screen w-full bg-white flex">
       {/* Left: Form Panel */}
-      <div className="w-full lg:w-1/2 xl:w-[45%] relative flex flex-col justify-center items-center px-6 sm:px-12 lg:px-16 xl:px-24 py-12">
+      <div className="w-full lg:w-1/2 xl:w-[55%] relative flex flex-col justify-center items-center px-6 sm:px-12 lg:px-16 xl:px-24 py-12">
         <div className="absolute top-20 left-1/2 -translate-x-1/2 flex items-center gap-3">
           <Image
             src={appConfig.logos.green_svg}
@@ -320,7 +328,8 @@ export default function LoginPage({
               value={formData.email}
               onChange={(e) => {
                 setFormData((prev) => ({ ...prev, email: e.target.value }));
-                if (errors.email) setErrors((prev) => ({ ...prev, email: undefined }));
+                if (errors.email)
+                  setErrors((prev) => ({ ...prev, email: undefined }));
               }}
               error={errors.email}
               autoComplete="email"
@@ -334,7 +343,8 @@ export default function LoginPage({
               value={formData.password}
               onChange={(e) => {
                 setFormData((prev) => ({ ...prev, password: e.target.value }));
-                if (errors.password) setErrors((prev) => ({ ...prev, password: undefined }));
+                if (errors.password)
+                  setErrors((prev) => ({ ...prev, password: undefined }));
               }}
               error={errors.password}
               autoComplete="current-password"
@@ -442,7 +452,7 @@ export default function LoginPage({
       </div>
 
       {/* Right: Hero Panel */}
-      <div className="hidden lg:block w-1/2 xl:w-[55%] p-4 pl-0">
+      <div className="hidden lg:block w-1/2 xl:w-[45%] p-4 pl-0">
         <HeroPanel />
       </div>
     </div>

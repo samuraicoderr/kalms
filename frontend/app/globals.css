@@ -25,6 +25,7 @@
   --color-primary-strong: var(--primary-color-strong);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --font-secondary: var(--secondary-font);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -48,6 +49,7 @@ body {
     font-weight: bold;
     color: var(--primary-color);
     font-size: 28px;
+    user-select: none;
 }
 
 .cook-font {
@@ -56,4 +58,27 @@ body {
     font-style: normal;
     font-weight: bold;
     color: var(--primary-color);
+    user-select: none;
+}
+
+.cook-font-only {
+    font-optical-sizing: auto;
+    font-family: var(--secondary-font);
+    font-style: normal;
+    font-weight: bold;
+}
+
+.hero-pan {
+  animation: hero-pan 122s linear infinite alternate;
+  background-size: 140% 140%;
+}
+
+@keyframes hero-pan {
+  0% {
+    background-position: top;
+  }
+ 
+  100% {
+    background-position: bottom;
+  }
 }

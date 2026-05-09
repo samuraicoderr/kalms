@@ -321,74 +321,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({
   /**
    * Login user
    */
-  const login = async (credentials: LoginCredentialsType): Promise<void> => {
-    throw new Error("Depreciated use AuthService.login and useLoginSuccess instead.");
-    setLoading(true);
-    setError(null);
-    updatePartialUser({
-      email: credentials.email,
-    });
-
-    try {
-      // Call login endpoint
-      const response = await api.post<TokenResponse | FirstFactorTokenResponse>(
-        BackendRoutes.loginFirstFactor,
-        credentials,
-        { requiresAuth: false }
-      );
-
-      useLoginSuccess(response.data as OAuthLoginResponse);
-
-      console.log("[Auth] Login successful");
-    } catch (error) {
-      if (isApiErrorType(error)) {
-        setError(error);
-      }
-      throw error;
-    } finally {
-      setLoading(false);
-    }
+  const login = async (_credentials: LoginCredentialsType): Promise<void> => {
+    throw new Error("Deprecated: use AuthService.login and useLoginSuccess instead.");
   };
 
   /**
    * Register new user
    */
-  const register = async (data: RegisterDataType): Promise<RegisterResponseType> => {
-    throw new Error("Depreciated use AuthService.register and useRegisterSuccess instead.");
-    setLoading(true);
-    setError(null);
-    updatePartialUser({
-      email: data.email,
-      phone: data.phone_number,
-    });
-
-    try {
-      // Call registration endpoint
-      const response = await api.post<RegisterResponseType>(
-        BackendRoutes.register,
-        data,
-        { requiresAuth: false }
-      );
-
-      const regData = response.data;
-
-      // Store onboarding token
-      updatePartialUser({
-        onboarding_token: regData.onboarding_token,
-        onboarding_status: regData.onboarding_status,
-      });
-      setOnboardingToken(regData.onboarding_token);
-
-      console.log("[Auth] Registration successful");
-      return regData;
-    } catch (error) {
-      if (isApiErrorType(error)) {
-        setError(error);
-      }
-      throw error;
-    } finally {
-      setLoading(false);
-    }
+  const register = async (_data: RegisterDataType): Promise<RegisterResponseType> => {
+    throw new Error("Deprecated: use AuthService.register and useRegisterSuccess instead.");
   };
 
   /**
