@@ -43,6 +43,9 @@ body {
   font-family: var(--font-geist-sans), system-ui, sans-serif;
 }
 
+no-underline {
+  text-decoration: none !important;
+}
 .logo-font {
     font-optical-sizing: auto;
     font-family: var(--secondary-font);

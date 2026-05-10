@@ -2,8 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import SubmitButton from "../../components/SubmitButton";
-import { CheckCircleIcon } from "../../components/AuthComponents";
+import { InlineAlert, PrimaryButton } from "../../components/AuthUI";
 import { useAuth } from "@/lib/api/auth/authContext";
 import { Routes } from "@/lib/api/FrontendRoutes";
 import { interpretServerError } from "@/lib/utils";
@@ -42,36 +41,26 @@ export default function CompletePage() {
 
   if (loading) {
     return (
-      <div style={{ textAlign: "center", position: "relative", overflow: "hidden" }}>
-        <div className="auth-confetti" aria-hidden="true" />
-        <div className="auth-success-icon">
-          <CheckCircleIcon />
-        </div>
-        <h2 className="auth-heading" style={{ marginBottom: "0.75rem" }}>
-          Welcome to Kalms!
+      <div className="text-center">
+        <h2 className="text-[22px] font-semibold cook-font mb-2">
+          Welcome to Kalms
         </h2>
-        <p className="auth-subheading" style={{ marginBottom: "1.5rem" }}>
-          Setting up your account...
-        </p>
-        <SubmitButton label="Loading..." disabled loading />
+        <p className="text-sm text-black/60 mb-6">Setting up your account...</p>
+        <PrimaryButton label="Loading..." disabled loading />
       </div>
     );
   }
 
   return (
-    <div style={{ textAlign: "center", position: "relative", overflow: "hidden" }}>
-      <div className="auth-confetti" aria-hidden="true" />
-      <div className="auth-success-icon">
-        <CheckCircleIcon />
-      </div>
-      <h2 className="auth-heading" style={{ marginBottom: "0.75rem" }}>
-        Welcome to Kalms!
+    <div className="text-center">
+      <h2 className="text-[22px] font-semibold cook-font mb-2">
+        Welcome to Kalms
       </h2>
-      <p className="auth-subheading" style={{ marginBottom: "1.5rem" }}>
+      <p className="text-sm text-black/60 mb-6">
         Your account is ready. Let&apos;s get started.
       </p>
-      {error && <div className="auth-alert auth-alert--error">{error}</div>}
-      <SubmitButton label="Get Started" type="button" onClick={goHome} />
+      {error && <InlineAlert message={error} />}
+      <PrimaryButton label="Get started" type="button" onClick={goHome} />
     </div>
   );
 }

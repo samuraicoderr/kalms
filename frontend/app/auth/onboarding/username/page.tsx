@@ -2,8 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import AuthInput from "../../components/AuthInput";
-import SubmitButton from "../../components/SubmitButton";
+import { InputField, InlineAlert, PrimaryButton } from "../../components/AuthUI";
 import OnboardingService from "@/lib/api/services/Onboarding.Service";
 import { useAuth, getOnboardingRoute } from "@/lib/api/auth/authContext";
 import { Routes } from "@/lib/api/FrontendRoutes";
@@ -122,36 +121,37 @@ export default function UsernamePage() {
         ? "Username is already taken"
         : null;
 
-  const statusClass = checking
-    ? "auth-username-status auth-username-status--checking"
+  const statusTone = checking
+    ? "info"
     : available === true
-      ? "auth-username-status auth-username-status--available"
-      : "auth-username-status auth-username-status--taken";
+      ? "success"
+      : available === false
+        ? "error"
+        : null;
 
   return (
     <div>
-      {error && <div className="auth-alert auth-alert--error">{error}</div>}
+      {error && <InlineAlert message={error} />}
 
-      <form onSubmit={submit} noValidate>
-        <AuthInput
-          id="username"
+      <form onSubmit={submit} className="space-y-4" noValidate>
+        <InputField
           label="Username"
           value={username}
           onChange={(e) => setUsername(e.target.value.trim())}
           placeholder="jane_doe"
-          required
           disabled={loading}
         />
 
-        {statusText && <div className={statusClass}>{statusText}</div>}
+        {statusText && statusTone && (
+          <InlineAlert tone={statusTone} message={statusText} />
+        )}
 
-        <div style={{ marginTop: "1.25rem" }}>
-          <SubmitButton
-            label="Continue"
-            loading={loading}
-            disabled={loading || available === false || !username}
-          />
-        </div>
+        <PrimaryButton
+          label="Continue"
+          type="submit"
+          loading={loading}
+          disabled={loading || available === false || !username}
+        />
       </form>
     </div>
   );

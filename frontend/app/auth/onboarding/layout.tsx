@@ -155,8 +155,13 @@ export default function OnboardingLayout({
   if (isLoading || !partialUser || !activeStep) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="animate-pulse text-muted-foreground">
-          <img src={appConfig.logos.grey} alt={appConfig.appName} className="h-30 mx-auto mb-4" />
+        <div className="animate-pulse text-black/40">
+          <img
+            src={appConfig.logos.grey}
+            alt={appConfig.appName}
+            className="h-16 mx-auto mb-4"
+          />
+          <p className="text-sm text-center">Preparing your setup...</p>
         </div>
       </div>
     );
@@ -176,10 +181,7 @@ export default function OnboardingLayout({
   };
 
   return (
-    <div
-      className="max-w-xl mx-auto px-4 py-10"
-      aria-live="polite"
-    >
+    <div className="w-full" aria-live="polite">
       <OnboardingProgress
         currentStep={activeStepIndex}
         totalSteps={totalSteps}
@@ -187,11 +189,11 @@ export default function OnboardingLayout({
         onStepClick={handleStepClick}
       />
 
-      <header className="mt-8 mb-6">
-        <h1 className="text-2xl font-semibold">
+      <header className="mt-6 mb-6">
+        <h1 className="text-[22px] font-semibold cook-font">
           {activeStep.title}
         </h1>
-        <p className="text-muted-foreground mt-2">
+        <p className="text-sm text-black/60 mt-2">
           {activeStep.subtitle}
         </p>
       </header>

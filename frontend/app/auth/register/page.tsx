@@ -3,11 +3,17 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import React, { useMemo, useState } from "react";
-import AuthInput from "../components/AuthInput";
-import SubmitButton from "../components/SubmitButton";
+import { motion } from "motion/react";
 import AuthDivider from "../components/AuthDivider";
 import OAuthButtons from "../components/OAuthButtons";
-import { EyeIcon, EyeOffIcon } from "../components/AuthComponents";
+import {
+  InlineAlert,
+  InputField,
+  PasswordToggle,
+  PrimaryButton,
+  containerVariants,
+  itemVariants,
+} from "../components/AuthUI";
 import { useAuth, getOnboardingRoute } from "@/lib/api/auth/authContext";
 import { Routes } from "@/lib/api/FrontendRoutes";
 import { interpretServerError } from "@/lib/utils";
@@ -29,19 +35,6 @@ function passwordStrength(password: string): number {
   if (/[0-9]/.test(password)) score += 1;
   if (/[^A-Za-z0-9]/.test(password)) score += 1;
   return score;
-}
-
-const STRENGTH_CLASSES: Record<number, string> = {
-  0: "",
-  1: "auth-password-strength-bar--weak",
-  2: "auth-password-strength-bar--fair",
-  3: "auth-password-strength-bar--good",
-  4: "auth-password-strength-bar--strong",
-};
-
-function getStrengthClass(index: number, score: number): string {
-  if (index >= score) return "";
-  return STRENGTH_CLASSES[score] ?? "";
 }
 
 export default function RegisterPage() {
@@ -114,44 +107,44 @@ export default function RegisterPage() {
   };
 
   return (
-    <div>
-      <h1 className="auth-heading">Create your account</h1>
-      <p className="auth-subheading">Set up your profile in a few quick steps.</p>
+    <motion.div
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+      className="space-y-6"
+    >
+      <motion.div variants={itemVariants}>
+        <h1 className="text-[22px] font-semibold cook-font">Create your account</h1>
+        <p className="text-sm text-black/60 mt-2">
+          Set up your profile in a few quick steps.
+        </p>
+      </motion.div>
 
-      {formMessage && (
-        <div className="auth-alert auth-alert--error" role="alert">
-          <span>{formMessage}</span>
-        </div>
-      )}
+      {formMessage && <InlineAlert message={formMessage} />}
 
-      <form onSubmit={handleSubmit} noValidate>
-        <div className="auth-name-row">
-          <AuthInput
-            id="register-first-name"
+      <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <InputField
             label="First name"
             value={firstName}
             onChange={(e) => setFirstName(e.target.value)}
             placeholder="Jane"
             autoComplete="given-name"
             error={formErrors.firstName}
-            required
             disabled={isLoading}
           />
-          <AuthInput
-            id="register-last-name"
+          <InputField
             label="Last name"
             value={lastName}
             onChange={(e) => setLastName(e.target.value)}
             placeholder="Doe"
             autoComplete="family-name"
             error={formErrors.lastName}
-            required
             disabled={isLoading}
           />
         </div>
 
-        <AuthInput
-          id="register-email"
+        <InputField
           label="Email"
           type="email"
           value={email}
@@ -159,12 +152,10 @@ export default function RegisterPage() {
           placeholder="name@example.com"
           autoComplete="email"
           error={formErrors.email}
-          required
           disabled={isLoading}
         />
 
-        <AuthInput
-          id="register-password"
+        <InputField
           label="Password"
           type={showPassword ? "text" : "password"}
           value={password}
@@ -172,31 +163,30 @@ export default function RegisterPage() {
           placeholder="Create a password"
           autoComplete="new-password"
           error={formErrors.password}
-          required
           disabled={isLoading}
           rightElement={
-            <button
-              type="button"
-              className="auth-input-icon"
-              onClick={() => setShowPassword((prev) => !prev)}
-              aria-label={showPassword ? "Hide password" : "Show password"}
-            >
-              {showPassword ? <EyeOffIcon /> : <EyeIcon />}
-            </button>
+            <PasswordToggle
+              shown={showPassword}
+              onToggle={() => setShowPassword((prev) => !prev)}
+            />
           }
         />
 
-        <div className="auth-password-strength" aria-hidden="true">
-          {[0, 1, 2, 3].map((i) => (
+        <div className="flex items-center gap-2">
+          {[1, 2, 3, 4].map((index) => (
             <div
-              key={i}
-              className={`auth-password-strength-bar ${getStrengthClass(i, strength)}`}
+              key={index}
+              className={`h-1.5 flex-1 rounded-full transition-colors ${
+                index <= strength ? "bg-primary" : "bg-black/10"
+              }`}
             />
           ))}
+          <span className="text-xs text-black/50">
+            {strength >= 3 ? "Strong" : strength === 2 ? "Good" : strength === 1 ? "Fair" : ""}
+          </span>
         </div>
 
-        <AuthInput
-          id="register-confirm-password"
+        <InputField
           label="Confirm password"
           type={showConfirmPassword ? "text" : "password"}
           value={confirmPassword}
@@ -204,22 +194,17 @@ export default function RegisterPage() {
           placeholder="Repeat your password"
           autoComplete="new-password"
           error={formErrors.confirmPassword}
-          required
           disabled={isLoading}
           rightElement={
-            <button
-              type="button"
-              className="auth-input-icon"
-              onClick={() => setShowConfirmPassword((prev) => !prev)}
-              aria-label={showConfirmPassword ? "Hide password" : "Show password"}
-            >
-              {showConfirmPassword ? <EyeOffIcon /> : <EyeIcon />}
-            </button>
+            <PasswordToggle
+              shown={showConfirmPassword}
+              onToggle={() => setShowConfirmPassword((prev) => !prev)}
+            />
           }
         />
 
-        <SubmitButton
-          label="Create Account"
+        <PrimaryButton
+          label="Create account"
           loading={isLoading}
           disabled={isLoading}
           type="submit"
@@ -227,16 +212,17 @@ export default function RegisterPage() {
       </form>
 
       <AuthDivider text="or sign up with" />
-      <div className="auth-oauth-grid">
-        <OAuthButtons
-          mode="register"
-          onError={(message) => setFormMessage(message)}
-        />
-      </div>
+      <OAuthButtons mode="register" onError={(message) => setFormMessage(message)} />
 
-      <p className="auth-footer">
-        Already have an account? <Link href={Routes.auth.login}>Sign in</Link>
-      </p>
-    </div>
+      <motion.p variants={itemVariants} className="text-center text-xs text-black/60">
+        Already have an account?{" "}
+        <Link
+          href={Routes.auth.login}
+          className="font-semibold text-primary hover:text-primary-strong transition-colors"
+        >
+          Sign in
+        </Link>
+      </motion.p>
+    </motion.div>
   );
 }

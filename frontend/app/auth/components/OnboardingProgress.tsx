@@ -22,18 +22,18 @@ export default function OnboardingProgress({
 }: OnboardingProgressProps) {
   return (
     <div className="w-full mb-8">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-3">
-        <span className="text-xs font-medium text-gray-500">
+    <div className="w-full mb-8">
+      <div className="flex items-center justify-between text-xs text-black/60">
+        <span>
           Step {currentStep + 1} of {totalSteps}
         </span>
-        <span className="text-xs font-medium text-[#0F6E56]">
+        <span className="text-primary">
           {Math.round(((currentStep + 1) / totalSteps) * 100)}% complete
         </span>
       </div>
 
       <div
-        className="flex items-center gap-2"
+        className="mt-3 flex items-center gap-2"
         role="progressbar"
         aria-valuenow={currentStep + 1}
         aria-valuemin={1}
@@ -44,30 +44,29 @@ export default function OnboardingProgress({
           const isCompleted = i < currentStep;
           const isActive = i === currentStep;
           const isClickable = !!onStepClick && i <= currentStep;
+          const baseClass = "h-1.5 flex-1 rounded-full transition-colors";
+          const stateClass = isCompleted
+            ? "bg-primary"
+            : isActive
+              ? "bg-primary/60"
+              : "bg-black/10";
 
           return (
-            <React.Fragment key={i}>
-              {/* Step Bar */}
-              <div className="flex-1 relative group">
-                <button
-                  type="button"
-                  disabled={!isClickable}
-                  onClick={() => isClickable && onStepClick(i)}
-                  onKeyDown={(e) => {
-                    if (isClickable && (e.key === "Enter" || e.key === " ")) {
-                      e.preventDefault();
-                      onStepClick?.(i);
-                    }
-                  }}
-                  aria-label={step?.title || `Step ${i + 1}`}
-                  className={`
-                    relative w-full rounded-full
-                    transition-all duration-200 ease-in-out
-                    focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0F6E56]/40
-                    ${
-                      isCompleted
-                        ? "bg-[#0F6E56]"
-                        : isActive
+            <button
+              key={i}
+              type="button"
+              onClick={() => isClickable && onStepClick(i)}
+              disabled={!isClickable}
+              className={`${baseClass} ${stateClass} ${
+                isClickable ? "cursor-pointer" : "cursor-not-allowed"
+              }`}
+              aria-label={step?.title || `Step ${i + 1}`}
+              title={step?.title}
+            />
+          );
+        })}
+      </div>
+    </div>
                         ? "bg-[#0F6E56]/70"
                         : "bg-gray-200"
                     }

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import { OAuthProviders, type OAuthProviderType } from "@/lib/api/types/auth";
 import OAuthService from "@/lib/api/services/OAuth.Service";
 import {
@@ -9,6 +9,7 @@ import {
   GoogleIcon,
   TwitterIcon,
 } from "./AuthComponents";
+import { GhostButton } from "./AuthUI";
 
 interface OAuthButtonsProps {
   mode: "login" | "register";
@@ -73,52 +74,28 @@ export default function OAuthButtons({ mode, onError, onSuccess }: OAuthButtonsP
     window.location.href = authUrl;
   };
 
-  const googleProvider = PROVIDERS.find((p) => p.primary)!;
-  const secondaryProviders = PROVIDERS.filter((p) => !p.primary);
-
   return (
-    <>
-      <button
-        type="button"
-        className="auth-oauth-btn"
-        onClick={() => startOAuth(googleProvider.key)}
-        disabled={loadingProvider !== null}
-        aria-label={`${cta} with Google`}
-      >
-        {loadingProvider === googleProvider.key ? (
-          <div className="auth-spinner auth-spinner--dark" />
-        ) : (
-          googleProvider.icon
-        )}
-        {googleProvider.label}
-      </button>
+    <div className="space-y-3">
+      {PROVIDERS.map((provider) => {
+        const configured = OAuthService.isProviderConfigured(provider.key);
+        const label = configured
+          ? provider.label
+          : `${provider.label} (coming soon)`;
 
-      <div className="auth-oauth-row">
-        {secondaryProviders.map((provider) => {
-          const configured = OAuthService.isProviderConfigured(provider.key);
-          return (
-            <button
-              key={provider.key}
-              type="button"
-              className="auth-oauth-icon-btn"
-              disabled={!configured || loadingProvider !== null}
-              onClick={() => startOAuth(provider.key)}
-              aria-label={
-                configured
-                  ? `${cta} with ${provider.label}`
-                  : `${provider.label} coming soon`
-              }
-              title={
-                configured
-                  ? `${cta} with ${provider.label}`
-                  : `${provider.label} coming soon`
-              }
-            >
-              {provider.icon}
-            </button>
-          );
-        })}
-      </div>
-    </>
+        return (
+          <GhostButton
+            key={provider.key}
+            label={
+              loadingProvider === provider.key
+                ? "Connecting..."
+                : label
+            }
+            icon={provider.icon}
+            onClick={() => startOAuth(provider.key)}
+            disabled={!configured || loadingProvider !== null}
+          />
+        );
+      })}
+    </div>
   );
 }

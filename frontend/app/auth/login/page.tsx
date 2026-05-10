@@ -1,18 +1,22 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
-import React, { Suspense, use, useEffect, useMemo, useState } from "react";
-import AuthInput from "../components/AuthInput";
-import SubmitButton from "../components/SubmitButton";
+import { useSearchParams } from "next/navigation";
+import React, { Suspense, useState } from "react";
+import { motion } from "motion/react";
 import AuthDivider from "../components/AuthDivider";
 import OAuthButtons from "../components/OAuthButtons";
-import { EyeIcon, EyeOffIcon } from "../components/AuthComponents";
-import { useAuth, useAuthStore } from "@/lib/api/auth/authContext";
+import {
+  InlineAlert,
+  InputField,
+  PasswordToggle,
+  PrimaryButton,
+  containerVariants,
+  itemVariants,
+} from "../components/AuthUI";
+import { useAuth } from "@/lib/api/auth/authContext";
 import { Routes } from "@/lib/api/FrontendRoutes";
-import { OnboardingStatus } from "@/lib/api/types/auth";
 import { interpretServerError } from "@/lib/utils";
-import { getSafeNextPath } from "@/lib/api/auth/redirect";
 import { AuthService } from "@/lib/api/services/AuthService";
 import { useLoginSuccess } from "../hooks/useLoginSuccess";
 import { OAuthLoginResponse } from "@/lib/api/types/auth";
@@ -25,8 +29,7 @@ interface FormErrors {
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 function LoginPageContent() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
+  useSearchParams();
   const { login, isLoading, clearError, error } = useAuth();
 
   const [email, setEmail] = useState("");
@@ -38,10 +41,6 @@ function LoginPageContent() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const isBusy = isSubmitting || isLoading;
-
-  const nextPath = useMemo(() => {
-    return getSafeNextPath(searchParams.get("next"), Routes.home);
-  }, [searchParams]);
 
   const validate = (): boolean => {
     const nextErrors: FormErrors = {};
@@ -82,19 +81,23 @@ function LoginPageContent() {
   };
 
   return (
-    <div>
-      <h1 className="auth-heading">Welcome back</h1>
-      <p className="auth-subheading">Sign in to continue to your workspace.</p>
+    <motion.div
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+      className="space-y-6"
+    >
+      <motion.div variants={itemVariants}>
+        <h1 className="text-[22px] font-semibold cook-font">Welcome back</h1>
+        <p className="text-sm text-black/60 mt-2">
+          Sign in to continue your calm journey.
+        </p>
+      </motion.div>
 
-      {formMessage && (
-        <div className="auth-alert auth-alert--error" role="alert">
-          <span>{formMessage}</span>
-        </div>
-      )}
+      {formMessage && <InlineAlert message={formMessage} />}
 
-      <form onSubmit={handleSubmit} noValidate>
-        <AuthInput
-          id="login-email"
+      <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+        <InputField
           label="Email"
           type="email"
           value={email}
@@ -102,12 +105,10 @@ function LoginPageContent() {
           placeholder="name@example.com"
           autoComplete="email"
           error={formErrors.email}
-          required
           disabled={isBusy}
         />
 
-        <AuthInput
-          id="login-password"
+        <InputField
           label="Password"
           type={showPassword ? "text" : "password"}
           value={password}
@@ -115,29 +116,27 @@ function LoginPageContent() {
           placeholder="Enter your password"
           autoComplete="current-password"
           error={formErrors.password}
-          required
           disabled={isBusy}
           rightElement={
-            <button
-              type="button"
-              className="auth-input-icon"
-              onClick={() => setShowPassword((prev) => !prev)}
-              aria-label={showPassword ? "Hide password" : "Show password"}
+            <PasswordToggle
+              shown={showPassword}
+              onToggle={() => setShowPassword((prev) => !prev)}
               disabled={isBusy}
-            >
-              {showPassword ? <EyeOffIcon /> : <EyeIcon />}
-            </button>
+            />
           }
         />
 
-        <div className="auth-forgot-row">
-          <Link className="auth-link" href="/auth/forgot-password">
+        <div className="flex justify-end">
+          <Link
+            className="text-xs font-medium text-primary hover:text-primary-strong transition-colors"
+            href={Routes.auth.forgotPassword}
+          >
             Forgot password?
           </Link>
         </div>
 
-        <SubmitButton
-          label="Sign In"
+        <PrimaryButton
+          label="Sign in"
           loading={isBusy}
           disabled={isBusy}
           type="submit"
@@ -145,17 +144,18 @@ function LoginPageContent() {
       </form>
 
       <AuthDivider />
-      <div className="auth-oauth-grid">
-        <OAuthButtons
-          mode="login"
-          onError={(message) => setFormMessage(message)}
-        />
-      </div>
+      <OAuthButtons mode="login" onError={(message) => setFormMessage(message)} />
 
-      <p className="auth-footer">
-        Don&apos;t have an account? <Link href={Routes.auth.register}>Create one</Link>
-      </p>
-    </div>
+      <motion.p variants={itemVariants} className="text-center text-xs text-black/60">
+        Don&apos;t have an account?{" "}
+        <Link
+          href={Routes.auth.register}
+          className="font-semibold text-primary hover:text-primary-strong transition-colors"
+        >
+          Create one
+        </Link>
+      </motion.p>
+    </motion.div>
   );
 }
 

@@ -32,9 +32,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" className="scrollbar-hide">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${bobbleboddy.variable} antialiased`}
+        className={`scrollbar-hide ${geistSans.variable} ${geistMono.variable} ${bobbleboddy.variable} antialiased`}
       >
         <AuthProviderClient>{children}</AuthProviderClient>
       </body>

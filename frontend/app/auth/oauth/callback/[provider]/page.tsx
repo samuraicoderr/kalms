@@ -1,6 +1,8 @@
 "use client";
 
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
+import { motion } from "motion/react";
+import { InlineAlert, PrimaryButton, containerVariants, itemVariants } from "../../../components/AuthUI";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import OAuthService from "@/lib/api/services/OAuth.Service";
 import { authUtils, TokenResponse } from "@/lib/api/auth/TokenManager";
@@ -178,54 +180,58 @@ function OAuthCallbackPageContent() {
   // Invalid provider in URL
   if (!provider) {
     return (
-      <div>
-        <h1 className="auth-heading">Invalid Provider</h1>
-        <div className="auth-alert auth-alert--error">
-          Unknown OAuth provider: &quot;{providerParam}&quot;
-        </div>
-        <button
-          className="auth-oauth-btn"
+      <motion.div
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+        className="space-y-6"
+      >
+        <motion.div variants={itemVariants}>
+          <h1 className="text-[22px] font-semibold cook-font">Invalid provider</h1>
+          <p className="text-sm text-black/60 mt-2">
+            We could not verify that OAuth provider.
+          </p>
+        </motion.div>
+        <InlineAlert message={`Unknown OAuth provider: "${providerParam}"`} />
+        <PrimaryButton
+          label="Back to login"
           onClick={() => router.replace(Routes.auth.login)}
-        >
-          Back to login
-        </button>
-      </div>
+        />
+      </motion.div>
     );
   }
 
   return (
-    <div>
-      <h1 className="auth-heading">Finishing sign-in</h1>
-      <p className="auth-subheading">
-        We are connecting your {provider} account.
-      </p>
+    <motion.div
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+      className="space-y-6"
+    >
+      <motion.div variants={itemVariants}>
+        <h1 className="text-[22px] font-semibold cook-font">Finishing sign-in</h1>
+        <p className="text-sm text-black/60 mt-2">
+          We are connecting your {provider} account.
+        </p>
+      </motion.div>
       {error ? (
-        <>
-          <div className="auth-alert auth-alert--error">{error}</div>
-          <button
-            className="auth-oauth-btn"
-            style={{ marginTop: "1rem" }}
+        <div className="space-y-4">
+          <InlineAlert message={error} />
+          <PrimaryButton
+            label="Back to login"
             onClick={() => router.replace(Routes.auth.login)}
-          >
-            Back to login
-          </button>
-        </>
-      ) : (
-        <div className="auth-alert auth-alert--info">
-          {isLoading ? "Please wait..." : "Redirecting..."}
+          />
         </div>
+      ) : (
+        <InlineAlert tone="info" message={isLoading ? "Please wait..." : "Redirecting..."} />
       )}
-    </div>
+    </motion.div>
   );
 }
 
 export default function OAuthCallbackPage() {
   return (
-    <Suspense
-      fallback={
-        <div className="auth-subheading">Finishing OAuth sign in...</div>
-      }
-    >
+    <Suspense fallback={<div className="text-sm text-black/60">Finishing OAuth sign in...</div>}>
       <OAuthCallbackPageContent />
     </Suspense>
   );

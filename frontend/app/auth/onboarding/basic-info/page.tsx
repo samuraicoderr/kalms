@@ -2,8 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import AuthInput from "../../components/AuthInput";
-import SubmitButton from "../../components/SubmitButton";
+import { InputField, InlineAlert, PrimaryButton } from "../../components/AuthUI";
 import OnboardingService from "@/lib/api/services/Onboarding.Service";
 import { useAuth, getOnboardingRoute } from "@/lib/api/auth/authContext";
 import { Routes } from "@/lib/api/FrontendRoutes";
@@ -119,36 +118,33 @@ export default function BasicInfoPage() {
 
   return (
     <div>
-      {error && <div className="auth-alert auth-alert--error">{error}</div>}
+      {error && <InlineAlert message={error} />}
 
-      <form onSubmit={submit} noValidate>
-        <AuthInput
-          id="first-name"
+      <form onSubmit={submit} className="space-y-4" noValidate>
+        <InputField
           label="First name"
           value={firstName}
           onChange={(e) => setFirstName(e.target.value)}
           placeholder="Enter your first name"
-          required
+          autoComplete="given-name"
           disabled={loading}
         />
 
-        <AuthInput
-          id="last-name"
+        <InputField
           label="Last name"
           value={lastName}
           onChange={(e) => setLastName(e.target.value)}
           placeholder="Enter your last name"
-          required
+          autoComplete="family-name"
           disabled={loading}
         />
 
-        <div style={{ marginTop: "1.25rem" }}>
-          <SubmitButton
-            label="Continue"
-            loading={loading}
-            disabled={loading || !firstName || !lastName}
-          />
-        </div>
+        <PrimaryButton
+          label="Continue"
+          type="submit"
+          loading={loading}
+          disabled={loading || !firstName || !lastName}
+        />
       </form>
     </div>
   );

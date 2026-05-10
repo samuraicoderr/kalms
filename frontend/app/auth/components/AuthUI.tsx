@@ -1,11 +1,10 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import Image from "next/image";
 import appConfig from "@/lib/appconfig";
-import { useAuth } from "@/lib/api/auth/authContext";
 
 const heroSlides = [
   {
@@ -20,15 +19,6 @@ const heroSlides = [
     title: "AI companion, human care.",
     body: "Get supportive guidance from Kalms AI, backed by evidence-based mental health practices.",
   },
-];
-
-const DEFAULT_ONBOARDING_FLOW = [
-  "needs_email_verification",
-  "needs_basic_information",
-  "needs_password",
-  "needs_profile_username",
-  "needs_profile_picture",
-  "completed",
 ];
 
 export const containerVariants = {
@@ -57,7 +47,9 @@ const fadeSlideIn = {
   },
 };
 
-export function HeroPanel() {
+export function HeroPanel({className}:{
+    className?: string
+}) {
   const [activeSlide, setActiveSlide] = useState(0);
 
   useEffect(() => {
@@ -72,7 +64,7 @@ export function HeroPanel() {
       variants={fadeSlideIn}
       initial="hidden"
       animate="visible"
-      className="hero-pan hidden lg:flex relative w-full h-full flex-col justify-end overflow-hidden rounded-[24px] bg-[#0a0a0f]"
+      className={`hero-pan hidden lg:flex relative w-full h-full flex-col justify-end overflow-hidden rounded-[24px] bg-[#0a0a0f] ${className || ""}`}
       style={{
         backgroundImage: `url(${appConfig.backgrounds.authScreens})`,
         backgroundPosition: "top left",
@@ -128,48 +120,6 @@ export function HeroPanel() {
         </div>
       </div>
     </motion.div>
-  );
-}
-
-export function AuthShell({
-  children,
-  showHero = true,
-}: {
-  children: React.ReactNode;
-  showHero?: boolean;
-}) {
-  return (
-    <div className="min-h-screen w-full bg-white flex">
-      <div className="w-full lg:w-1/2 xl:w-[55%] relative flex flex-col justify-center items-center px-6 sm:px-12 lg:px-16 xl:px-24 py-12">
-        <div className="absolute top-20 left-1/2 -translate-x-1/2 flex items-center gap-3">
-          <Image
-            src={appConfig.logos.green_svg}
-            alt={appConfig.appName}
-            width={48}
-            height={48}
-            className="w-12 h-12"
-            priority
-          />
-          <span className="logo-font text-2xl font-bold tracking-tight">
-            {appConfig.appName}
-          </span>
-        </div>
-        <motion.div
-          variants={containerVariants}
-          initial="hidden"
-          animate="visible"
-          className="w-full max-w-[440px] pt-16"
-        >
-          {children}
-        </motion.div>
-      </div>
-
-      {showHero && (
-        <div className="hidden lg:block w-1/2 xl:w-[45%] p-4 pl-0">
-          <HeroPanel />
-        </div>
-      )}
-    </div>
   );
 }
 
@@ -359,30 +309,25 @@ export function InlineAlert({
 }
 
 export function OnboardingHeader({
-  stepKey,
+  currentStep,
+  totalSteps,
   title,
   subtitle,
 }: {
-  stepKey: string;
+  currentStep: number;
+  totalSteps: number;
   title: string;
   subtitle: string;
 }) {
-  const { partialUser } = useAuth();
-
-  const flow = useMemo(() => {
-    const steps = partialUser?.onboarding_flow || [];
-    return steps.length ? steps : DEFAULT_ONBOARDING_FLOW;
-  }, [partialUser?.onboarding_flow]);
-
-  const stepIndex = Math.max(0, flow.indexOf(stepKey));
-  const totalSteps = flow.length || DEFAULT_ONBOARDING_FLOW.length;
-  const progress = Math.round(((stepIndex + 1) / totalSteps) * 100);
+  const clampedTotal = Math.max(1, totalSteps);
+  const step = Math.min(Math.max(0, currentStep), clampedTotal - 1);
+  const progress = Math.round(((step + 1) / clampedTotal) * 100);
 
   return (
     <motion.div variants={itemVariants} className="mb-8">
       <div className="flex items-center justify-between text-xs text-black/60">
         <span>
-          Step {stepIndex + 1} of {totalSteps}
+          Step {step + 1} of {clampedTotal}
         </span>
         <span className="text-primary">{progress}% complete</span>
       </div>
@@ -397,5 +342,27 @@ export function OnboardingHeader({
         <p className="text-sm text-black/60 mt-2">{subtitle}</p>
       </div>
     </motion.div>
+  );
+}
+
+export function LogoMark({
+    className
+}: {
+    className?: string
+}) {
+  return (
+    <div className={"flex items-center gap-3 " + className || ""}>
+      <Image
+        src={appConfig.logos.green_svg}
+        alt={appConfig.appName}
+        width={48}
+        height={48}
+        className="w-12 h-12"
+        priority
+      />
+      <span className="logo-font text-2xl font-bold tracking-tight ">
+        {appConfig.appName}
+      </span>
+    </div>
   );
 }

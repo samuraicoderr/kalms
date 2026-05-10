@@ -2,8 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import AuthInput from "../../components/AuthInput";
-import SubmitButton from "../../components/SubmitButton";
+import { InputField, InlineAlert, PasswordToggle, PrimaryButton } from "../../components/AuthUI";
 import OnboardingService from "@/lib/api/services/Onboarding.Service";
 import { useAuth, getOnboardingRoute } from "@/lib/api/auth/authContext";
 import { Routes } from "@/lib/api/FrontendRoutes";
@@ -105,62 +104,49 @@ export default function PasswordPage() {
 
   return (
     <div>
-      {error && <div className="auth-alert auth-alert--error">{error}</div>}
+      {error && <InlineAlert message={error} />}
 
-      <form onSubmit={submit} noValidate>
-        <AuthInput
-          id="password"
+      <form onSubmit={submit} className="space-y-4" noValidate>
+        <InputField
           label="Password"
           type={showPassword ? "text" : "password"}
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           placeholder="Create a password"
-          required
-          disabled={loading}
           autoComplete="new-password"
+          disabled={loading}
           rightElement={
-            <button
-              type="button"
-              onClick={togglePasswordVisibility}
-              className="auth-input-toggle"
-              aria-label={showPassword ? "Hide password" : "Show password"}
+            <PasswordToggle
+              shown={showPassword}
+              onToggle={togglePasswordVisibility}
               disabled={loading}
-            >
-              {showPassword ? "Hide" : "Show"}
-            </button>
+            />
           }
         />
 
-        <AuthInput
-          id="confirm-password"
+        <InputField
           label="Confirm password"
           type={showConfirmPassword ? "text" : "password"}
           value={confirmPassword}
           onChange={(e) => setConfirmPassword(e.target.value)}
           placeholder="Confirm your password"
-          required
-          disabled={loading}
           autoComplete="new-password"
+          disabled={loading}
           rightElement={
-            <button
-              type="button"
-              onClick={toggleConfirmPasswordVisibility}
-              className="auth-input-toggle"
-              aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+            <PasswordToggle
+              shown={showConfirmPassword}
+              onToggle={toggleConfirmPasswordVisibility}
               disabled={loading}
-            >
-              {showConfirmPassword ? "Hide" : "Show"}
-            </button>
+            />
           }
         />
 
-        <div style={{ marginTop: "1.25rem" }}>
-          <SubmitButton
-            label="Continue"
-            loading={loading}
-            disabled={loading || !password || !confirmPassword}
-          />
-        </div>
+        <PrimaryButton
+          label="Continue"
+          type="submit"
+          loading={loading}
+          disabled={loading || !password || !confirmPassword}
+        />
       </form>
     </div>
   );

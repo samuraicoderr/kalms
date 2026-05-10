@@ -2,8 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import SubmitButton from "../../components/SubmitButton";
-import { MailIcon } from "../../components/AuthComponents";
+import { InputField, InlineAlert, PrimaryButton } from "../../components/AuthUI";
 import OnboardingService from "@/lib/api/services/Onboarding.Service";
 import { useAuth, getOnboardingRoute } from "@/lib/api/auth/authContext";
 import { Routes } from "@/lib/api/FrontendRoutes";
@@ -119,20 +118,12 @@ export default function VerifyEmailPage() {
 
   return (
     <div>
-      <div style={{ display: "flex", justifyContent: "center", marginBottom: "1rem" }}>
-        <MailIcon />
-      </div>
+      {message && <InlineAlert tone="success" message={message} />}
+      {error && <InlineAlert message={error} />}
 
-      {message && <div className="auth-alert auth-alert--success">{message}</div>}
-      {error && <div className="auth-alert auth-alert--error">{error}</div>}
-
-      <form onSubmit={verifyOtp} noValidate>
-        <label htmlFor="email-otp" className="auth-label">
-          Verification code
-        </label>
-        <input
-          id="email-otp"
-          className="auth-input"
+      <form onSubmit={verifyOtp} className="space-y-4" noValidate>
+        <InputField
+          label="Verification code"
           type="text"
           inputMode="numeric"
           autoComplete="one-time-code"
@@ -141,29 +132,24 @@ export default function VerifyEmailPage() {
           value={otp}
           onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, OTP_LENGTH))}
           disabled={loading}
-          aria-label="6 digit verification code"
         />
 
-        <div style={{ marginTop: "1.5rem" }}>
-          <SubmitButton
-            label="Verify email"
-            loading={loading}
-            disabled={loading || otp.length !== OTP_LENGTH}
-          />
-        </div>
+        <PrimaryButton
+          label="Verify email"
+          loading={loading}
+          disabled={loading || otp.length !== OTP_LENGTH}
+          type="submit"
+        />
       </form>
 
-      <div className="auth-footer" style={{ marginTop: "1rem" }}>
-        <button
-          type="button"
-          className="auth-link"
-          onClick={resendOtp}
-          disabled={cooldown > 0 || resending}
-          style={{ background: "none", border: "none", padding: 0, cursor: cooldown > 0 ? "not-allowed" : "pointer" }}
-        >
-          {cooldown > 0 ? `Resend code in ${cooldown}s` : resending ? "Sending..." : "Resend code"}
-        </button>
-      </div>
+      <button
+        type="button"
+        className="mt-4 text-xs text-primary hover:text-primary-strong transition-colors disabled:opacity-60"
+        onClick={resendOtp}
+        disabled={cooldown > 0 || resending}
+      >
+        {cooldown > 0 ? `Resend code in ${cooldown}s` : resending ? "Sending..." : "Resend code"}
+      </button>
     </div>
   );
 }

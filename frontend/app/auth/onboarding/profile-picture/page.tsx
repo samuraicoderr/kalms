@@ -2,8 +2,7 @@
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import SubmitButton from "../../components/SubmitButton";
-import { UploadIcon } from "../../components/AuthComponents";
+import { InlineAlert, PrimaryButton } from "../../components/AuthUI";
 import OnboardingService from "@/lib/api/services/Onboarding.Service";
 import { useAuth, getOnboardingRoute } from "@/lib/api/auth/authContext";
 import { Routes } from "@/lib/api/FrontendRoutes";
@@ -112,10 +111,12 @@ export default function ProfilePicturePage() {
 
   return (
     <div>
-      {error && <div className="auth-alert auth-alert--error">{error}</div>}
+      {error && <InlineAlert message={error} />}
 
       <div
-        className={`auth-upload-area ${dragActive ? "auth-upload-area--active" : ""}`}
+        className={`w-full rounded-[18px] border-2 border-dashed px-6 py-10 text-center transition-all cursor-pointer ${
+          dragActive ? "border-primary bg-primary/5" : "border-black/10 bg-white"
+        }`}
         onDragOver={(e) => {
           e.preventDefault();
           setDragActive(true);
@@ -127,17 +128,21 @@ export default function ProfilePicturePage() {
         tabIndex={0}
       >
         {preview ? (
-          <img className="auth-avatar-preview" src={preview} alt="Profile preview" />
+          <img
+            className="mx-auto h-32 w-32 rounded-full object-cover border border-black/10"
+            src={preview}
+            alt="Profile preview"
+          />
         ) : (
-          <UploadIcon />
+          <div className="mx-auto h-20 w-20 rounded-full bg-primary/10 text-primary flex items-center justify-center text-2xl font-semibold">
+            {partialUser?.first_name?.[0] || "K"}
+          </div>
         )}
 
-        <div className="auth-upload-text">
-          <div>
-            <strong>Click to upload</strong> or drag and drop
-          </div>
-          <div>PNG, JPG, WEBP up to 5MB</div>
-        </div>
+        <p className="mt-4 text-sm text-black/60">
+          <span className="text-primary font-semibold">Click to upload</span> or drag and drop
+        </p>
+        <p className="text-xs text-black/40 mt-1">PNG, JPG, WEBP up to 5MB</p>
 
         <input
           ref={inputRef}
@@ -148,13 +153,14 @@ export default function ProfilePicturePage() {
         />
       </div>
 
-      <SubmitButton
-        label="Save and continue"
-        loading={loading}
-        disabled={loading || !file}
-        onClick={submit}
-        type="button"
-      />
+      <div className="mt-6">
+        <PrimaryButton
+          label="Save and continue"
+          loading={loading}
+          disabled={loading || !file}
+          onClick={submit}
+        />
+      </div>
     </div>
   );
 }
