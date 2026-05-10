@@ -1,6 +1,6 @@
 import FrontendRoutes from "../FrontendRoutes";
 
-export const AUTH_PRESENCE_COOKIE = "anualy_auth_present";
+export const AUTH_PRESENCE_COOKIE = "kalms_auth_present";
 
 export function isSafeRelativePath(path: string | null | undefined): path is string {
   if (!path) {

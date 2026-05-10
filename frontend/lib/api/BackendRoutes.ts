@@ -1,5 +1,5 @@
 /**
- * Anualy Backend API Routes
+ * Kalms Backend API Routes
  * Maps exactly to Django REST Framework endpoints (OAS 3.0 spec)
  */
 
@@ -278,7 +278,7 @@ export const BackendRoutes = {
   ========================== */
   realtime: {
     websocket: (token: string) =>
-      `ws://localhost:9000/ws/anualy/?token=${token}`,
+      `ws://localhost:9000/ws/kalms/?token=${token}`,
   },
 
   /* =========================

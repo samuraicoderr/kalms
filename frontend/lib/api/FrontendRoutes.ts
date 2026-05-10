@@ -1,6 +1,6 @@
 /**
  * Frontend Route Definitions
- * Centralized route management for Anualy
+ * Centralized route management for kalms
  */
 
 
