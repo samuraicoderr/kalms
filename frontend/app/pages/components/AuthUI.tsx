@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useRef, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import Image from "next/image";
@@ -131,6 +131,77 @@ export function HeroPanel() {
   );
 }
 
+function ScrollProxy({
+  children,
+}: {
+  children: (scrollRef: React.RefObject<HTMLDivElement>) => React.ReactNode;
+}) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const scrollEl = scrollRef.current;
+    if (!scrollEl) return;
+
+    // ---- WHEEL SUPPORT (desktop) ----
+    const handleWheel = (e: WheelEvent) => {
+      if (!scrollEl) return;
+
+      // Ignore if already scrolling inside scrollEl
+      if (e.target instanceof Node && scrollEl.contains(e.target)) {
+        return;
+      }
+
+      e.preventDefault();
+
+      scrollEl.scrollBy({
+        top: e.deltaY,
+        behavior: "auto",
+      });
+    };
+
+    // ---- TOUCH SUPPORT (mobile) ----
+    let lastTouchY = 0;
+
+    const handleTouchStart = (e: TouchEvent) => {
+      lastTouchY = e.touches[0].clientY;
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      if (!scrollEl) return;
+
+      if (e.target instanceof Node && scrollEl.contains(e.target)) {
+        return;
+      }
+
+      const currentY = e.touches[0].clientY;
+      const delta = lastTouchY - currentY;
+      lastTouchY = currentY;
+
+      scrollEl.scrollBy({
+        top: delta,
+        behavior: "auto",
+      });
+    };
+
+    document.addEventListener("wheel", handleWheel, { passive: false });
+    document.addEventListener("touchstart", handleTouchStart, {
+      passive: true,
+    });
+    document.addEventListener("touchmove", handleTouchMove, {
+      passive: false,
+    });
+
+    return () => {
+      document.removeEventListener("wheel", handleWheel);
+      document.removeEventListener("touchstart", handleTouchStart);
+      document.removeEventListener("touchmove", handleTouchMove);
+    };
+  }, []);
+
+  return <>{children(scrollRef)}</>;
+}
+
+
 export function AuthShell({
   children,
   showHero = true,
@@ -139,35 +210,41 @@ export function AuthShell({
   showHero?: boolean;
 }) {
   return (
-    <div className="h-screen w-full bg-white flex overflow-hidden">
-      <div className="w-full lg:w-1/2 xl:w-[55%] relative flex flex-col justify-center items-center px-6 sm:px-12 lg:px-16 xl:px-24 py-12">
-        {/* <div className="absolute top-20 left-1/2 -translate-x-1/2 flex items-center gap-3">
-        </div> */}
-        <motion.div
-          variants={containerVariants}
-          initial="hidden"
-          animate="visible"
-          className="w-full overflow-y-auto scrollbar-hide py-20 pt-16 "
-        >
-          <div className="max-w-[440px] mx-auto">
-            <div className="flex item-center justify-center gap-3 mx-auto mb-12 w-fit">
-              <Image
-                src={appConfig.logos.green_svg}
-                alt={appConfig.appName}
-                width={48}
-                height={48}
-                className="w-12 h-12"
-                priority
-              />
-              <span className="logo-font text-2xl font-bold tracking-tight">
-                {appConfig.appName}
-              </span>
-            </div>
-            {children}
+    <div className="h-dvh w-full bg-white flex overflow-hidden">
+      {/* LEFT SIDE */}
+<div className="relative flex w-full lg:w-1/2 xl:w-[55%] overflow-hidden">
+  <ScrollProxy>
+    {(scrollRef) => (
+      <motion.div
+        ref={scrollRef}
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+        className="flex-1 overflow-y-auto scrollbar-hide px-6 sm:px-12 lg:px-16 xl:px-24 py-16"
+      >
+        <div className="max-w-[440px] mx-auto">
+          <div className="flex items-center justify-center gap-3 mx-auto mb-12 w-fit">
+            <Image
+              src={appConfig.logos.green_svg}
+              alt={appConfig.appName}
+              width={48}
+              height={48}
+              className="w-12 h-12"
+              priority
+            />
+            <span className="logo-font text-2xl font-bold tracking-tight">
+              {appConfig.appName}
+            </span>
           </div>
-        </motion.div>
-      </div>
 
+          {children}
+        </div>
+      </motion.div>
+    )}
+  </ScrollProxy>
+</div>
+
+      {/* RIGHT SIDE HERO */}
       {showHero && (
         <div className="hidden lg:block w-1/2 xl:w-[45%] p-4 pl-0">
           <HeroPanel />
