@@ -5,20 +5,9 @@ import { motion } from "motion/react";
 import { InlineAlert, PrimaryButton, containerVariants, itemVariants } from "../../../components/AuthUI";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import OAuthService from "@/lib/api/services/OAuth.Service";
-import { authUtils, TokenResponse } from "@/lib/api/auth/TokenManager";
-import {
-  useAuth,
-  useAuthStore,
-  getOnboardingRoute,
-} from "@/lib/api/auth/authContext";
 import { Routes } from "@/lib/api/FrontendRoutes";
 import { OAuthLoginResponse, OAuthProviders, type OAuthProviderType } from "@/lib/api/types/auth";
 import { interpretServerError } from "@/lib/utils";
-import {
-  isMFARequired,
-  isAuthTokens,
-  isOnboardingRequired,
-} from "@/lib/api/types/auth";
 import { useLoginSuccess } from "@/app/auth/hooks/useLoginSuccess";
 
 function isOAuthProvider(value: string): value is OAuthProviderType {
@@ -30,7 +19,6 @@ function OAuthCallbackPageContent() {
   const searchParams = useSearchParams();
   const params = useParams<{ provider: string }>();
   const providerParam = params.provider;
-  const { fetchCurrentUser, setOnboardingToken, updatePartialUser } = useAuth();
 
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -46,15 +34,6 @@ function OAuthCallbackPageContent() {
   useLoginSuccess(loginResponse);
   
   const handleOAuthCallback = useCallback(async () => {
-    const leaveToLogin = () => {
-      provider
-      setIsLoading(true);
-      setTimeout(() => {
-        router.replace(Routes.auth.login);
-      }, 1000);
-    };
-
-    // Validate provider from URL path
     if (!provider) {
       setError("Unknown or unsupported OAuth provider.");
       setIsLoading(false);
@@ -84,7 +63,7 @@ function OAuthCallbackPageContent() {
       setError(
         "No authorization code received from provider. Please try again.",
       );
-      // leaveToLogin();
+      setIsLoading(false);
       return;
     }
 
@@ -93,7 +72,7 @@ function OAuthCallbackPageContent() {
       setError(
         "Session has expired",
       );
-      // leaveToLogin();
+      setIsLoading(false);
       return;
     }
 
@@ -110,68 +89,18 @@ function OAuthCallbackPageContent() {
       });
 
       setLoginResponse(response);
-      // // --- Normal auth (JWT tokens) ---
-      // if (isAuthTokens(response)) {
-      //   authUtils.initializeAuth({
-      //     access: response.access,
-      //     refresh: response.refresh,
-      //     access_expiry: response.access_expiry || "",
-      //     refresh_expiry: response.refresh_expiry || "",
-      //   });
-      //   await fetchCurrentUser();
-      //   router.replace(Routes.home);
-      //   return;
-      // }
-
-      // // --- Onboarding (new user, incomplete profile) ---
-      // if (isOnboardingRequired(response)) {
-      //   setOnboardingToken(response.onboarding_token);
-      //   updatePartialUser({
-      //     onboarding_status: response.onboarding_status,
-      //     onboarding_flow: response.onboarding_flow,
-      //     onboarding_token: response.onboarding_token,
-      //     email: response.user?.email,
-      //     first_name: response.user?.first_name,
-      //     last_name: response.user?.last_name,
-      //     username: response.user?.username,
-      //     profile_picture: response.user?.profile_picture,
-      //   });
-
-      //   const onboardingRoute = getOnboardingRoute(response.onboarding_status);
-      //   router.replace(onboardingRoute);
-      //   return;
-      // }
-
-      // // --- MFA required ---
-      // if (isMFARequired(response)) {
-      //   // Store session token so the MFA verification page can use it
-      //   sessionStorage.setItem("mfa_session_token", response.mfa_session_token);
-      //   router.replace(Routes.auth.login);
-      //   return;
-      // }
-
-      // None of the expected shapes matched
-      setError("Unexpected response from server. Please try again.");
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.dir(err);
+      const details = interpretServerError(err);
       const message =
-        interpretServerError(err) ||
-        err?.response?.data?.details ||
-        err?.response?.data?.error ||
+        details[0] ||
         "OAuth authentication failed. Please try again.";
-      setError(String(message));
+      setError(message);
     } finally {
       sessionStorage.removeItem("oauth_provider");
       setIsLoading(false);
     }
-  }, [
-    provider,
-    searchParams,
-    router,
-    fetchCurrentUser,
-    setOnboardingToken,
-    updatePartialUser,
-  ]);
+  }, [provider, searchParams]);
 
   useEffect(() => {
     handleOAuthCallback();

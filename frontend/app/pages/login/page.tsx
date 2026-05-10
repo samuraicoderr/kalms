@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
+import type { Variants } from "motion/react";
 import { Eye, EyeOff, ArrowRight, Loader2 } from "lucide-react";
 import Image from "next/image";
 import appConfig from "@/lib/appconfig";
@@ -19,7 +20,7 @@ interface LoginPageProps {
 }
 
 // ─── Animation Variants ──────────────────────────────────
-const containerVariants = {
+const containerVariants: Variants = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
@@ -27,7 +28,7 @@ const containerVariants = {
   },
 };
 
-const itemVariants = {
+const itemVariants: Variants = {
   hidden: { opacity: 0, y: 16 },
   visible: {
     opacity: 1,
@@ -36,7 +37,7 @@ const itemVariants = {
   },
 };
 
-const fadeSlideIn = {
+const fadeSlideIn: Variants = {
   hidden: { opacity: 0, x: 40 },
   visible: {
     opacity: 1,

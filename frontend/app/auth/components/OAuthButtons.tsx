@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useState } from "react";
 import { OAuthProviders, type OAuthProviderType } from "@/lib/api/types/auth";
 import OAuthService from "@/lib/api/services/OAuth.Service";
 import {
@@ -14,7 +14,7 @@ import { GhostButton } from "./AuthUI";
 interface OAuthButtonsProps {
   mode: "login" | "register";
   onError?: (message: string) => void;
-  onSuccess?: (data: any) => void;
+  onSuccess?: (data: { provider: OAuthProviderType; mode: OAuthButtonsProps["mode"] }) => void;
 }
 
 interface ProviderConfig {
@@ -51,10 +51,6 @@ const PROVIDERS: ProviderConfig[] = [
 export default function OAuthButtons({ mode, onError, onSuccess }: OAuthButtonsProps) {
   const [loadingProvider, setLoadingProvider] = useState<OAuthProviderType | null>(null);
 
-  const cta = useMemo(() => {
-    return mode === "login" ? "Sign in" : "Sign up";
-  }, [mode]);
-
   const startOAuth = (provider: OAuthProviderType) => {
     setLoadingProvider(provider);
 
@@ -69,9 +65,10 @@ export default function OAuthButtons({ mode, onError, onSuccess }: OAuthButtonsP
 
     // Store which provider we're using so we know on return
     sessionStorage.setItem("oauth_provider", provider);
+    onSuccess?.({ provider, mode });
 
     // Redirect to Google/GitHub/etc.
-    window.location.href = authUrl;
+    window.location.assign(authUrl);
   };
 
   return (

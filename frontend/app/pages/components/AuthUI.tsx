@@ -2,6 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
+import type { Variants } from "motion/react";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import Image from "next/image";
 import appConfig from "@/lib/appconfig";
@@ -31,7 +32,7 @@ const DEFAULT_ONBOARDING_FLOW = [
   "completed",
 ];
 
-export const containerVariants = {
+export const containerVariants: Variants = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
@@ -39,7 +40,7 @@ export const containerVariants = {
   },
 };
 
-export const itemVariants = {
+export const itemVariants: Variants = {
   hidden: { opacity: 0, y: 16 },
   visible: {
     opacity: 1,
@@ -48,7 +49,7 @@ export const itemVariants = {
   },
 };
 
-const fadeSlideIn = {
+const fadeSlideIn: Variants = {
   hidden: { opacity: 0, x: 40 },
   visible: {
     opacity: 1,

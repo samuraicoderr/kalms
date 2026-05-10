@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
 import React, { Suspense, useState } from "react";
 import { motion } from "motion/react";
 import AuthDivider from "../components/AuthDivider";
@@ -29,8 +28,7 @@ interface FormErrors {
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 function LoginPageContent() {
-  useSearchParams();
-  const { login, isLoading, clearError, error } = useAuth();
+  const { isLoading, clearError, error } = useAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
