@@ -1,15 +1,14 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  turbopack: {
-    root: __dirname,
-  },  experimental: {
+  experimental: {
     optimizePackageImports: [],
   },
   compiler: {
     styledComponents: true,
   },
   images: {
+    domains: ['localhost'],  // add this
     remotePatterns: [
       {
         protocol: "https",
