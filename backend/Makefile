@@ -109,6 +109,9 @@ delete-all-tables:
 
 drop-tables: delete-all-tables
 
+drop-tables+:
+	uv run python manage.py delete_all_tables_one_at_a_time
+
 # reset tables (doesn't delete tables)
 flush:
 	uv run python manage.py flush  
