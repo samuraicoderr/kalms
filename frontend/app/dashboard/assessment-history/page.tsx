@@ -1,26 +1,30 @@
-import {
-  Card,
-  EmptyState,
-  PageHeader,
-  PrimaryLink,
-  SoftIcon,
-  historyRows,
-} from "../components/DashboardUI";
+"use client";
+
+import { useEffect, useState } from "react";
+import { Card, EmptyState, PageHeader, PrimaryLink, SoftIcon } from "../components/DashboardUI";
 import { Routes } from "@/lib/api/FrontendRoutes";
+import { AssessmentService } from "@/lib/api/services/AssessmentService";
+import type { Assessment } from "@/lib/api/types";
 import { CalendarDays, Download, History, Search } from "lucide-react";
 
+function label(value: string) {
+  return value.replace("_", " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
 export default function AssessmentHistoryPage() {
+  const [assessments, setAssessments] = useState<Assessment[]>([]);
+
+  useEffect(() => {
+    AssessmentService.history().then(setAssessments).catch(() => setAssessments([]));
+  }, []);
+
   return (
     <div className="space-y-8">
       <PageHeader
         eyebrow="Assessment history"
         title="A clear record of your wellbeing over time."
         description="Review past assessments, compare patterns, and revisit recommendations when you need them."
-        action={
-          <PrimaryLink href={Routes.dashboardRoutes.startAssessment}>
-            New assessment
-          </PrimaryLink>
-        }
+        action={<PrimaryLink href={Routes.dashboardRoutes.startAssessment}>New assessment</PrimaryLink>}
       />
 
       <Card>
@@ -45,22 +49,22 @@ export default function AssessmentHistoryPage() {
         </div>
 
         <div className="mt-6 overflow-hidden rounded-[18px] border border-[#e5e7eb]">
-          {historyRows.map((row) => (
-            <div
-              key={`${row.date}-${row.assessment}`}
-              className="grid gap-3 border-b border-[#e5e7eb] bg-white p-4 last:border-b-0 md:grid-cols-[0.7fr_1.4fr_0.8fr_0.7fr]"
-            >
+          {assessments.map((assessment) => (
+            <div key={assessment.id} className="grid gap-3 border-b border-[#e5e7eb] bg-white p-4 last:border-b-0 md:grid-cols-[0.8fr_1.2fr_0.8fr_0.8fr]">
               <span className="flex items-center gap-2 text-sm font-medium text-[#111827]">
                 <CalendarDays size={16} className="text-primary" />
-                {row.date}
+                {assessment.completed_at ? new Date(assessment.completed_at).toLocaleDateString() : "Draft"}
               </span>
-              <span className="text-sm text-[#6b7280]">{row.assessment}</span>
-              <span className="text-sm font-semibold text-[#111827]">{row.score}</span>
+              <span className="text-sm text-[#6b7280]">{label(assessment.assessment_type)}</span>
+              <span className="text-sm font-semibold text-[#111827]">{assessment.score_summary.total} total</span>
               <span className="w-fit rounded-full bg-[#f8fafc] px-3 py-1 text-xs font-semibold text-primary">
-                {row.result}
+                {assessment.prediction ? label(assessment.prediction.category) : "Pending"}
               </span>
             </div>
           ))}
+          {!assessments.length && (
+            <div className="bg-white p-6 text-sm text-[#6b7280]">No completed assessments yet.</div>
+          )}
         </div>
       </Card>
 

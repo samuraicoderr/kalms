@@ -76,6 +76,7 @@ class UserSerializer(serializers.ModelSerializer):
             "profile_picture",
             "picture_url",
             "phone_number",
+            "institution",
             "onboarding_status",
             "onboarding_flow",
             "is_email_verified",
@@ -114,6 +115,7 @@ class CreateUserSerializer(serializers.ModelSerializer):
             "email",
             "profile_picture",
             "phone_number",
+            "institution",
             "onboarding_status",
             "onboarding_flow",
             "is_email_verified",
@@ -143,6 +145,7 @@ class UpdateUserSerializer(serializers.ModelSerializer):
             "first_name",
             "last_name",
             "username",
+            "institution",
             "mfa_is_enabled",
         )
         read_only_fields = ("id",)

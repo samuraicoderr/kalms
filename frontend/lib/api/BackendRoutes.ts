@@ -243,8 +243,26 @@ export const BackendRoutes = {
    DASHBOARD
   ========================== */
   dashboard: {
+    summary: `${API_VERSION}/dashboard/summary/`,
     occupancyTrend: `${API_VERSION}/dashboard/occupancy_trend/`,
     operational: `${API_VERSION}/dashboard/operational/`,
+  },
+
+  wellness: {
+    assessments: `${API_VERSION}/assessments/`,
+    submitAssessment: `${API_VERSION}/assessments/submit/`,
+    latestAssessment: `${API_VERSION}/assessments/latest/`,
+    assessmentHistory: `${API_VERSION}/assessments/history/`,
+    assessmentDetail: (id: string) => `${API_VERSION}/assessments/${id}/`,
+    recommendations: `${API_VERSION}/recommendations/`,
+    dismissRecommendation: (id: string) => `${API_VERSION}/recommendations/${id}/dismiss/`,
+    moodLogs: `${API_VERSION}/mood-logs/`,
+    todayMoodLog: `${API_VERSION}/mood-logs/today/`,
+    chatConversations: `${API_VERSION}/chat/conversations/`,
+    activeChatConversation: `${API_VERSION}/chat/conversations/active/`,
+    chatConversationDetail: (id: string) => `${API_VERSION}/chat/conversations/${id}/`,
+    chatMessages: (id: string) => `${API_VERSION}/chat/conversations/${id}/messages/`,
+    sendChatMessage: (id: string) => `${API_VERSION}/chat/conversations/${id}/send-message/`,
   },
 
   /* =========================

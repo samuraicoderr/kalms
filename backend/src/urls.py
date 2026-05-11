@@ -28,6 +28,9 @@ from src.users.urls import (
 from src.common.urls import common_router
 from src.notifications.urls import notification_router
 from src.reset_password.routes import password_reset_router
+from src.ai_chats.urls import ai_chats_router
+from src.assessments.urls import assessments_router
+from src.moods.urls import moods_router
 
 # Kalms management routers
 from src.organizations.urls import org_router
@@ -47,6 +50,9 @@ sub_routers = [
     [password_reset_router, "password_reset", "password_reset"],
     # Kalms routes
     [org_router, "organizations"],
+    [assessments_router, "assessments"],
+    [moods_router, "moods"],
+    [ai_chats_router, "ai_chats"],
 ]
 
 
