@@ -338,6 +338,7 @@ class User(OnboardingMixin, UserAuthMixin, AbstractUser):
         # Removed region="NG" — enforce region at the serializer/form layer per user's country
     )
 
+    institution = models.CharField(max_length=255, blank=True, default="")
     date_of_birth = models.DateField(blank=True, null=True)
 
     is_email_verified = models.BooleanField(default=False, db_index=True)
