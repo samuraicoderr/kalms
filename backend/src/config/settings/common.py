@@ -163,7 +163,12 @@ MY_APPS = [
     "src.files",            # File uploads, media management, document templates    
     "src.notifications",    # SMS, email, and in-app alert triggers and templates
     "src.organizations",     # Multi-tenancy support, org management, billing integration
+    "src.assessments",       # 
+    "src.moods",
+    "src.ai_chats",
 ]
+
+
 
 INSTALLED_APPS = (
     "django.contrib.auth",
