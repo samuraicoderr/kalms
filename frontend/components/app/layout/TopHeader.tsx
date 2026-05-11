@@ -1,13 +1,12 @@
 "use client";
 
-import React, { useState } from "react";
-import { useRouter } from "next/navigation";
-import { Users, Bell, Menu } from "lucide-react";
-import appConfig from "@/lib/appconfig";
+import React from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { Bell, Menu, Search } from "lucide-react";
 import UserDropdown from "../fragments/UserDropdown";
-import PlanUpgradeDropdown from "../fragments/PlanUpgradeDropdown";
 import { useRequiredAuth } from "@/lib/api/auth/authContext";
-import { FrontendRoutes, Routes } from "@/lib/api/FrontendRoutes";
+import appConfig from "@/lib/appconfig";
+import { FrontendRoutes } from "@/lib/api/FrontendRoutes";
 
 interface TopHeaderProps {
   onMenuToggle: () => void;
@@ -16,110 +15,74 @@ interface TopHeaderProps {
   inviteLink?: string;
 }
 
-export default function TopHeader({
-  onMenuToggle,
-  teamName = "Your team",
-  onSendInvites,
-  inviteLink,
-}: TopHeaderProps) {
+const pageTitles: Record<string, string> = {
+  [FrontendRoutes.dashboardRoutes.overview]: "Overview",
+  [FrontendRoutes.dashboardRoutes.assessments]: "Assessments",
+  [FrontendRoutes.dashboardRoutes.startAssessment]: "Start assessment",
+  [FrontendRoutes.dashboardRoutes.assessmentResults]: "Assessment results",
+  [FrontendRoutes.dashboardRoutes.moodTracker]: "Mood tracker",
+  [FrontendRoutes.dashboardRoutes.chat]: "Chat companion",
+  [FrontendRoutes.dashboardRoutes.assessmentHistory]: "Assessment history",
+  [FrontendRoutes.dashboardRoutes.insights]: "Insights",
+  [FrontendRoutes.dashboardRoutes.settings]: "Settings",
+  [FrontendRoutes.dashboardRoutes.profile]: "Profile",
+};
+
+export default function TopHeader({ onMenuToggle }: TopHeaderProps) {
   const router = useRouter();
-  const [isInviteOpen, setIsInviteOpen] = useState(false);
+  const pathname = usePathname();
   const { user, logout } = useRequiredAuth();
 
+  const title = pageTitles[pathname] || "Kalms";
   const userName =
     user?.username ||
     `${user?.first_name ?? ""} ${user?.last_name ?? ""}`.trim() ||
-    "you";
-
+    "Student";
   const avatarUrl =
     user?.profile_picture || user?.picture_url || appConfig.media.avatarExample;
 
-  const handleLogout = () => {
-    logout();
-  };
-
-  const handleCopyInviteLink = async () => {
-    const fallbackLink = `${window.location.origin}${window.location.pathname}`;
-    const value = inviteLink ?? fallbackLink;
-
-    if (navigator.clipboard?.writeText) {
-      await navigator.clipboard.writeText(value);
-      return;
-    }
-
-    const textarea = document.createElement("textarea");
-    textarea.value = value;
-    textarea.setAttribute("readonly", "");
-    textarea.style.position = "fixed";
-    textarea.style.opacity = "0";
-    document.body.appendChild(textarea);
-    textarea.select();
-    document.execCommand("copy");
-    document.body.removeChild(textarea);
-  };
-
-  const handleSendInvites = async (emails: string[]) => {
-    if (onSendInvites) {
-      await onSendInvites(emails);
-      return;
-    }
-
-    // Temporary fallback until backend invite endpoint is wired.
-    await new Promise((resolve) => setTimeout(resolve, 700));
-  };
-
-  const handleUpgrade = async () => {
-    // Placeholder for billing flow integration.
-    await new Promise((resolve) => setTimeout(resolve, 700));
-    console.log("Upgrade flow triggered");
-  };
-
   return (
-    <header className="h-14 sm:h-16 border-b border-gray-200 flex items-center justify-between px-4 sm:px-6 flex-shrink-0 bg-white">
-      {/* Left side */}
-      <div className="flex items-center gap-3">
-        {/* Hamburger — visible on mobile/tablet */}
+    <header className="flex min-h-16 flex-shrink-0 items-center justify-between gap-3 border-b border-[#e5e7eb] bg-white/90 px-4 backdrop-blur md:px-6">
+      <div className="flex min-w-0 items-center gap-3">
         <button
           onClick={onMenuToggle}
-          className="lg:hidden p-2 -ml-2 rounded-lg hover:bg-gray-100 text-gray-500 transition-colors"
-          aria-label="Toggle sidebar"
+          className="rounded-full p-2 text-[#6b7280] transition hover:bg-slate-100 lg:hidden"
+          aria-label="Open navigation"
         >
           <Menu size={20} />
         </button>
-
-        <div className="flex items-center gap-2">
-          <img
-            src={appConfig.logos.green}
-            alt={appConfig.appName}
-            className="w-7 h-7 object-contain"
-          />
-          <span className="cook-font text-lg sm:text-xl tracking-tight text-gray-900 hidden sm:inline">
-            {appConfig.appName}
-          </span>
+        <div className="min-w-0">
+          <p className="text-xs font-medium text-[#9ca3af]">Kalms dashboard</p>
+          <h1 className="truncate text-base font-semibold text-[#111827] md:text-lg">
+            {title}
+          </h1>
         </div>
       </div>
 
-      {/* Right side */}
-      <div className="flex items-center gap-2 sm:gap-4">
-
-        <div className="flex items-center gap-1 sm:gap-3 sm:pl-2 sm:border-l sm:border-gray-200">
-          <button
-            className="text-gray-500 hover:text-gray-700 hover:bg-gray-100 p-2 rounded-full transition-colors relative"
-            aria-label="Notifications"
-          >
-            <Bell size={20} />
-            {/* Notification dot */}
-            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white" />
-          </button>
-
-          <UserDropdown userName={userName} avatarUrl={avatarUrl as string} onLogout={handleLogout} onProfileClick={
-            ()=>{
-              router.push(FrontendRoutes.dashboardRoutes.profile);
-            }
-          }/>
-        </div>
+      <div className="hidden max-w-sm flex-1 items-center rounded-full border border-[#e5e7eb] bg-[#f8fafc] px-4 py-2 md:flex">
+        <Search size={16} className="text-[#9ca3af]" />
+        <input
+          aria-label="Search Kalms"
+          placeholder="Search insights, assessments..."
+          className="min-w-0 flex-1 bg-transparent px-3 text-sm outline-none placeholder:text-[#9ca3af]"
+        />
       </div>
 
+      <div className="flex items-center gap-2">
+        <button
+          className="relative rounded-full p-2 text-[#6b7280] transition hover:bg-slate-100 hover:text-[#111827]"
+          aria-label="Notifications"
+        >
+          <Bell size={20} />
+          <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-primary ring-2 ring-white" />
+        </button>
+        <UserDropdown
+          userName={userName}
+          avatarUrl={avatarUrl as string}
+          onLogout={logout}
+          onProfileClick={() => router.push(FrontendRoutes.dashboardRoutes.profile)}
+        />
+      </div>
     </header>
   );
 }

@@ -1,5 +1,1 @@
-"use client";
-
-export default function OrganizationDetailPage() {
-  return <div></div>;
-}
+export { default } from "./overview/page";

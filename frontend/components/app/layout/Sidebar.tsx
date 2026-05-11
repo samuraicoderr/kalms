@@ -1,33 +1,24 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
+import Image from "next/image";
+import { usePathname, useRouter } from "next/navigation";
 import {
-  Search,
-  Plus,
-  Home,
-  Clock,
-  Star,
-  Settings,
-  HelpCircle,
-  X,
-  Crown,
-  Trash2,
   BarChart3,
-  MessageCircle,
-  BookOpen,
-  History,
-  Bell,
-  ChevronDown,
-  ChevronRight,
-  LogOut,
+  BookOpenCheck,
   Heart,
+  Home,
+  LineChart,
+  LogOut,
+  MessageCircle,
+  Settings,
+  UserRound,
+  X,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
-import SidebarItem from "./SidebarItem";
 import appConfig from "@/lib/appconfig";
-import { useRouter } from "next/navigation";
 import { FrontendRoutes } from "@/lib/api/FrontendRoutes";
 import { useRequiredAuth } from "@/lib/api/auth/authContext";
+import { cn } from "@/lib/utils";
 import { SmartAvatar } from "@/components/ui/SmartAvatar";
 
 interface SidebarProps {
@@ -37,33 +28,37 @@ interface SidebarProps {
   onClose: () => void;
 }
 
-export default function Sidebar({
-  organizationName,
-  organizationInitials,
-  isOpen,
-  onClose,
-}: SidebarProps) {
+const navItems = [
+  { label: "Overview", href: FrontendRoutes.dashboardRoutes.overview, icon: Home },
+  { label: "Assessments", href: FrontendRoutes.dashboardRoutes.assessments, icon: BookOpenCheck },
+  { label: "Mood tracker", href: FrontendRoutes.dashboardRoutes.moodTracker, icon: Heart },
+  { label: "Chat companion", href: FrontendRoutes.dashboardRoutes.chat, icon: MessageCircle },
+  { label: "History", href: FrontendRoutes.dashboardRoutes.assessmentHistory, icon: BarChart3 },
+  { label: "Insights", href: FrontendRoutes.dashboardRoutes.insights, icon: LineChart },
+  { label: "Profile", href: FrontendRoutes.dashboardRoutes.profile, icon: UserRound },
+  { label: "Settings", href: FrontendRoutes.dashboardRoutes.settings, icon: Settings },
+];
+
+export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const router = useRouter();
+  const pathname = usePathname();
   const { user, logout } = useRequiredAuth();
-  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
 
-  const toggleSection = (section: string) => {
-    setExpandedSections(prev => ({
-      ...prev,
-      [section]: !prev[section]
-    }));
+  const userName =
+    user?.username ||
+    `${user?.first_name ?? ""} ${user?.last_name ?? ""}`.trim() ||
+    "Student";
+
+  const goTo = (href: string) => {
+    router.push(href);
+    onClose();
   };
-
-  const userName = user ? `${user.first_name ?? ""} ${user.last_name ?? ""}`.trim() : "";
-  const universityName = "University of Example"; // Placeholder
-  const wellnessStatus = "Healthy"; // Placeholder
-  const moodIndicator = "😊"; // Placeholder 
 
   return (
     <>
-      {/* Mobile overlay */}
       {isOpen && (
-        <div
+        <button
+          aria-label="Close navigation overlay"
           className="fixed inset-0 z-40 bg-black/30 backdrop-blur-sm lg:hidden"
           onClick={onClose}
         />
@@ -71,372 +66,97 @@ export default function Sidebar({
 
       <aside
         className={cn(
-          "flex flex-col bg-white border-r border-gray-200 h-full z-50",
-          // Desktop: always visible, fixed width
-          "lg:relative lg:translate-x-0 lg:w-[320px] lg:flex-shrink-0",
-          // Mobile/Tablet: slide-in drawer
-          "fixed top-0 left-0 w-[320px] transition-transform duration-300 ease-in-out",
-          isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+          "fixed left-0 top-0 z-50 flex h-full w-[300px] flex-col border-r border-[#e5e7eb] bg-white transition-transform duration-300 lg:relative lg:translate-x-0",
+          isOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
-        {/* TOP SECTION */}
-        <div className="p-6 border-b border-gray-200 block lg:hidden">
+        <div className="flex items-center justify-between px-5 py-5">
+          <button
+            onClick={() => goTo(FrontendRoutes.dashboardRoutes.overview)}
+            className="flex items-center gap-3"
+          >
+            <Image
+              src={appConfig.logos.green_svg}
+              alt={appConfig.appName}
+              width={40}
+              height={40}
+              className="h-10 w-10"
+              priority
+            />
+            <span className="logo-font text-[24px] leading-none">Kalms</span>
+          </button>
+          <button
+            aria-label="Close navigation"
+            onClick={onClose}
+            className="rounded-full p-2 text-[#6b7280] hover:bg-slate-100 lg:hidden"
+          >
+            <X size={18} />
+          </button>
+        </div>
+
+        <div className="mx-4 rounded-[22px] border border-[#e5e7eb] bg-[#fbfaff] p-4">
           <div className="flex items-center gap-3">
-            <img
-              src={appConfig.logos.green}
-              alt="Kalms"
-              className="w-8 h-8 object-contain"
-            />
-            <div>
-              <h1 className="cook-font text-xl font-bold text-gray-900">Kalms</h1>
-              {/* <p className="text-xs text-gray-500">Mental Wellness Platform</p> */}
+            <SmartAvatar useSignedInUser size={42} charsToUseFromName={2} />
+            <div className="min-w-0">
+              <p className="truncate text-sm font-semibold text-[#111827]">{userName}</p>
+              <p className="text-xs text-[#6b7280]">Student wellness space</p>
+            </div>
+          </div>
+          <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
+            <div className="rounded-2xl bg-white p-3">
+              <p className="text-[#9ca3af]">Status</p>
+              <p className="mt-1 font-semibold text-green-700">Healthy</p>
+            </div>
+            <div className="rounded-2xl bg-white p-3">
+              <p className="text-[#9ca3af]">Streak</p>
+              <p className="mt-1 font-semibold text-primary">7 days</p>
             </div>
           </div>
         </div>
 
-        {/* USER PROFILE SECTION */}
-        <div className="p-4 border-b border-gray-200">
-          <div className="flex items-center gap-3 mb-3">
-            <SmartAvatar
-              useSignedInUser={true}
-              size={40}
-              charsToUseFromName={2}
-            />
-            <div className="flex-1 min-w-0">
-              <p className="font-medium text-gray-900 truncate">{userName}</p>
-              <p className="text-sm text-gray-500 truncate">{universityName}</p>
-            </div>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-              {wellnessStatus}
-            </span>
-            <span className="text-lg">{moodIndicator}</span>
-          </div>
-        </div>
+        <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-5">
+          {navItems.map((item) => {
+            const isActive =
+              pathname === item.href ||
+              (item.href !== FrontendRoutes.dashboardRoutes.overview &&
+                pathname.startsWith(item.href));
+            const Icon = item.icon;
 
-        {/* MAIN NAVIGATION */}
-        <nav className="flex-1 px-2 py-4 space-y-1 overflow-y-auto scrollbar-thin">
-          {/* Dashboard */}
-          <div>
-            <SidebarItem
-              icon={Home}
-              label="Dashboard"
-              onClick={() => router.push(FrontendRoutes.dashboardRoutes.overview)}
-            />
-            {expandedSections.dashboard && (
-              <div className="ml-6 space-y-1 mt-1">
-                <SidebarItem
-                  label="Overview"
-                  onClick={() => router.push(FrontendRoutes.dashboardRoutes.overview)}
-                  className="text-sm"
-                />
-                <SidebarItem
-                  label="Latest Assessment"
-                  onClick={() => router.push(FrontendRoutes.dashboardRoutes.latestAssessment)}
-                  className="text-sm"
-                />
-                <SidebarItem
-                  label="Quick Stats"
-                  onClick={() => router.push(FrontendRoutes.dashboardRoutes.quickStats)}
-                  className="text-sm"
-                />
-                <SidebarItem
-                  label="Trend Summaries"
-                  onClick={() => router.push(FrontendRoutes.dashboardRoutes.trendSummaries)}
-                  className="text-sm"
-                />
-              </div>
-            )}
-          </div>
-
-          {/* Assessments */}
-          <div>
-            <SidebarItem
-              icon={BarChart3}
-              label="Assessments"
-              onClick={() => toggleSection('assessments')}
-              rightIcon={expandedSections.assessments ? ChevronDown : ChevronRight}
-            />
-            {expandedSections.assessments && (
-              <div className="ml-6 space-y-1 mt-1">
-                <SidebarItem
-                  label="Start Assessment"
-                  onClick={() => router.push(FrontendRoutes.dashboardRoutes.startAssessment)}
-                  className="text-sm"
-                />
-                <SidebarItem
-                  label="PHQ-9"
-                  onClick={() => router.push(FrontendRoutes.dashboardRoutes.phq9)}
-                  className="text-sm"
-                />
-                <SidebarItem
-                  label="GAD-7"
-                  onClick={() => router.push(FrontendRoutes.dashboardRoutes.gad7)}
-                  className="text-sm"
-                />
-                <SidebarItem
-                  label="PSS-10"
-                  onClick={() => router.push(FrontendRoutes.dashboardRoutes.pss10)}
-                  className="text-sm"
-                />
-                <SidebarItem
-                  label="Assessment Results"
-                  onClick={() => router.push(FrontendRoutes.dashboardRoutes.assessmentResults)}
-                  className="text-sm"
-                />
-                <SidebarItem
-                  label="Saved Drafts"
-                  onClick={() => router.push(FrontendRoutes.dashboardRoutes.savedDrafts)}
-                  className="text-sm"
-                />
-              </div>
-            )}
-          </div>
-
-          {/* Mood Tracker */}
-          <div>
-            <SidebarItem
-              icon={Heart}
-              label="Mood Tracker"
-              onClick={() => toggleSection('moodTracker')}
-              rightIcon={expandedSections.moodTracker ? ChevronDown : ChevronRight}
-            />
-            {expandedSections.moodTracker && (
-              <div className="ml-6 space-y-1 mt-1">
-                <SidebarItem
-                  label="Daily Check-in"
-                  onClick={() => router.push(FrontendRoutes.dashboardRoutes.dailyCheckIn)}
-                  className="text-sm"
-                />
-                <SidebarItem
-                  label="Mood Calendar"
-                  onClick={() => router.push(FrontendRoutes.dashboardRoutes.moodCalendar)}
-                  className="text-sm"
-                />
-                <SidebarItem
-                  label="Stress Tracker"
-                  onClick={() => router.push(FrontendRoutes.dashboardRoutes.stressTracker)}
-                  className="text-sm"
-                />
-                <SidebarItem
-                  label="Energy Tracker"
-                  onClick={() => router.push(FrontendRoutes.dashboardRoutes.energyTracker)}
-                  className="text-sm"
-                />
-                <SidebarItem
-                  label="Emotional Trends"
-                  onClick={() => router.push(FrontendRoutes.dashboardRoutes.emotionalTrends)}
-                  className="text-sm"
-                />
-              </div>
-            )}
-          </div>
-
-          {/* Chat with Kalms AI */}
-          <div>
-            <SidebarItem
-              icon={MessageCircle}
-              label="Chat with Kalms AI"
-              onClick={() => toggleSection('chat')}
-              rightIcon={expandedSections.chat ? ChevronDown : ChevronRight}
-            />
-            {expandedSections.chat && (
-              <div className="ml-6 space-y-1 mt-1">
-                <SidebarItem
-                  label="AI Companion Chat"
-                  onClick={() => router.push(FrontendRoutes.dashboardRoutes.aiCompanion)}
-                  className="text-sm"
-                />
-                <SidebarItem
-                  label="Previous Conversations"
-                  onClick={() => router.push(FrontendRoutes.dashboardRoutes.previousConversations)}
-                  className="text-sm"
-                />
-                <SidebarItem
-                  label="Suggested Prompts"
-                  onClick={() => router.push(FrontendRoutes.dashboardRoutes.suggestedPrompts)}
-                  className="text-sm"
-                />
-                <SidebarItem
-                  label="Wellness Tips"
-                  onClick={() => router.push(FrontendRoutes.dashboardRoutes.wellnessTips)}
-                  className="text-sm"
-                />
-              </div>
-            )}
-          </div>
-
-          {/* Journal */}
-          <div>
-            <SidebarItem
-              icon={BookOpen}
-              label="Journal"
-              onClick={() => toggleSection('journal')}
-              rightIcon={expandedSections.journal ? ChevronDown : ChevronRight}
-            />
-            {expandedSections.journal && (
-              <div className="ml-6 space-y-1 mt-1">
-                <SidebarItem
-                  label="Daily Journal Entries"
-                  onClick={() => router.push(FrontendRoutes.dashboardRoutes.dailyEntries)}
-                  className="text-sm"
-                />
-                <SidebarItem
-                  label="Private Notes"
-                  onClick={() => router.push(FrontendRoutes.dashboardRoutes.privateNotes)}
-                  className="text-sm"
-                />
-                <SidebarItem
-                  label="Reflection Prompts"
-                  onClick={() => router.push(FrontendRoutes.dashboardRoutes.reflectionPrompts)}
-                  className="text-sm"
-                />
-              </div>
-            )}
-          </div>
-
-          <SidebarItem
-            icon={History}
-            label="Assessment History"
-            onClick={() => router.push(FrontendRoutes.dashboardRoutes.assessmentHistory)}
-          />
-
-          {/* Insights & Trends */}
-          <div>
-            <SidebarItem
-              icon={BarChart3}
-              label="Insights & Trends"
-              onClick={() => toggleSection('insights')}
-              rightIcon={expandedSections.insights ? ChevronDown : ChevronRight}
-            />
-            {expandedSections.insights && (
-              <div className="ml-6 space-y-1 mt-1">
-                <SidebarItem
-                  label="Emotional Trends"
-                  onClick={() => router.push(FrontendRoutes.dashboardRoutes.emotionalTrends)}
-                  className="text-sm"
-                />
-                <SidebarItem
-                  label="Stress Patterns"
-                  onClick={() => router.push(FrontendRoutes.dashboardRoutes.stressPatterns)}
-                  className="text-sm"
-                />
-                <SidebarItem
-                  label="Assessment Analytics"
-                  onClick={() => router.push(FrontendRoutes.dashboardRoutes.assessmentAnalytics)}
-                  className="text-sm"
-                />
-                <SidebarItem
-                  label="Weekly Summaries"
-                  onClick={() => router.push(FrontendRoutes.dashboardRoutes.weeklySummaries)}
-                  className="text-sm"
-                />
-                <SidebarItem
-                  label="Monthly Summaries"
-                  onClick={() => router.push(FrontendRoutes.dashboardRoutes.monthlySummaries)}
-                  className="text-sm"
-                />
-              </div>
-            )}
-          </div>
-
-          {/* Notifications */}
-          <div>
-            <SidebarItem
-              icon={Bell}
-              label="Notifications"
-              onClick={() => toggleSection('notifications')}
-              rightIcon={expandedSections.notifications ? ChevronDown : ChevronRight}
-            />
-            {expandedSections.notifications && (
-              <div className="ml-6 space-y-1 mt-1">
-                <SidebarItem
-                  label="Reminders"
-                  onClick={() => router.push(FrontendRoutes.dashboardRoutes.reminders)}
-                  className="text-sm"
-                />
-                <SidebarItem
-                  label="Streak Updates"
-                  onClick={() => router.push(FrontendRoutes.dashboardRoutes.streakUpdates)}
-                  className="text-sm"
-                />
-                <SidebarItem
-                  label="Assessment Reminders"
-                  onClick={() => router.push(FrontendRoutes.dashboardRoutes.assessmentReminders)}
-                  className="text-sm"
-                />
-                <SidebarItem
-                  label="Motivational Notifications"
-                  onClick={() => router.push(FrontendRoutes.dashboardRoutes.motivationalNotifications)}
-                  className="text-sm"
-                />
-              </div>
-            )}
-          </div>
-
-          {/* Settings */}
-          <div>
-            <SidebarItem
-              icon={Settings}
-              label="Settings"
-              onClick={() => toggleSection('settings')}
-              rightIcon={expandedSections.settings ? ChevronDown : ChevronRight}
-            />
-            {expandedSections.settings && (
-              <div className="ml-6 space-y-1 mt-1">
-                <SidebarItem
-                  label="Profile Settings"
-                  onClick={() => router.push(FrontendRoutes.dashboardRoutes.profileSettings)}
-                  className="text-sm"
-                />
-                <SidebarItem
-                  label="Password & Security"
-                  onClick={() => router.push(FrontendRoutes.dashboardRoutes.passwordSecurity)}
-                  className="text-sm"
-                />
-                <SidebarItem
-                  label="Notification Preferences"
-                  onClick={() => router.push(FrontendRoutes.dashboardRoutes.notificationPreferences)}
-                  className="text-sm"
-                />
-                <SidebarItem
-                  label="Privacy Settings"
-                  onClick={() => router.push(FrontendRoutes.dashboardRoutes.privacySettings)}
-                  className="text-sm"
-                />
-                <SidebarItem
-                  label="Theme Preferences"
-                  onClick={() => router.push(FrontendRoutes.dashboardRoutes.themePreferences)}
-                  className="text-sm"
-                />
-              </div>
-            )}
-          </div>
+            return (
+              <button
+                key={item.href}
+                onClick={() => goTo(item.href)}
+                className={cn(
+                  "flex w-full items-center gap-3 rounded-[18px] px-4 py-3 text-left text-sm font-medium transition",
+                  isActive
+                    ? "bg-primary text-white shadow-[0_8px_24px_rgba(var(--primary-rgb),0.2)]"
+                    : "text-[#6b7280] hover:bg-[#f8fafc] hover:text-[#111827]"
+                )}
+              >
+                <Icon size={18} />
+                {item.label}
+              </button>
+            );
+          })}
         </nav>
 
-        {/* BOTTOM SECTION */}
-        <div className="border-t border-gray-200 p-4 space-y-3">
-          <div className="bg-purple-50 rounded-lg p-3">
-            <p className="text-sm font-medium text-purple-900 mb-1">Daily Wellness Quote</p>
-            <p className="text-xs text-purple-700">"Every day is a new beginning. Take a deep breath and start again."</p>
+        <div className="border-t border-[#e5e7eb] p-4">
+          <div className="mb-3 rounded-[18px] bg-[#ede7ff] p-4">
+            <p className="text-sm font-semibold text-primary">Today's anchor</p>
+            <p className="mt-1 text-xs leading-5 text-primary/75">
+              One honest check-in is enough progress for today.
+            </p>
           </div>
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-900">Current Streak</p>
-              <p className="text-xs text-gray-500">7 days</p>
-            </div>
-            <button
-              onClick={() => {
-                logout();
-                router.push(FrontendRoutes.auth.login);
-              }}
-              className="flex items-center gap-2 px-3 py-2 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
-            >
-              <LogOut size={16} />
-              Logout
-            </button>
-          </div>
+          <button
+            onClick={async () => {
+              await logout();
+              router.push(FrontendRoutes.auth.login);
+            }}
+            className="flex w-full items-center justify-center gap-2 rounded-full border border-[#e5e7eb] px-4 py-3 text-sm font-semibold text-[#6b7280] transition hover:bg-slate-50 hover:text-[#111827]"
+          >
+            <LogOut size={16} />
+            Sign out
+          </button>
         </div>
       </aside>
     </>
