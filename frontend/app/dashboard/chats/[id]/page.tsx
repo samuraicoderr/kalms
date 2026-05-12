@@ -61,7 +61,12 @@ export default function ChatThreadPage() {
     ])
       .then(([threadList, threadMessages]) => {
         if (ignore) return;
-        setThreads(threadList);
+        // Ensure we always store an array of conversations. The backend may
+        // return a paginated object or an array depending on the endpoint.
+        const list = Array.isArray(threadList)
+          ? threadList
+          : threadList?.results ?? threadList?.data ?? [];
+        setThreads(list);
         setMessages(sortMessages(threadMessages));
         setError("");
       })

@@ -164,6 +164,7 @@ class LangChainModelFactory:
         provider = os.getenv("LANGCHAIN_LLM_PROVIDER", "").strip().lower()
         model = os.getenv("LANGCHAIN_LLM_MODEL", "").strip()
         api_key = os.getenv("LANGCHAIN_LLM_API_KEY", "").strip()
+        base_url = os.getenv("LANGCHAIN_LLM_PROVIDER_BASE_URL", "").strip()
 
         if not provider or not model:
             raise LLMConfigurationError("LANGCHAIN_LLM_PROVIDER and LANGCHAIN_LLM_MODEL must be configured.")
@@ -172,22 +173,41 @@ class LangChainModelFactory:
             if not api_key:
                 raise LLMConfigurationError("LANGCHAIN_LLM_API_KEY is required for OpenAI.")
             from langchain_openai import ChatOpenAI
-
-            return ChatOpenAI(model=model, api_key=api_key, temperature=0.4)
+            kw = {
+                "model": model,
+                "api_key": api_key,
+                "temperature": 0.4,
+            }
+            if base_url:
+                kw["base_url"] = base_url
+            return ChatOpenAI(**kw)
 
         if provider == "anthropic":
             if not api_key:
                 raise LLMConfigurationError("LANGCHAIN_LLM_API_KEY is required for Anthropic.")
             from langchain_anthropic import ChatAnthropic
-
-            return ChatAnthropic(model=model, api_key=api_key, temperature=0.4)
+            kw = {
+                "model": model,
+                "api_key": api_key,
+                "temperature": 0.4,
+            }
+            if base_url:
+                kw["base_url"] = base_url
+            return ChatAnthropic(**kw)
 
         if provider in {"gemini", "google"}:
             if not api_key:
                 raise LLMConfigurationError("LANGCHAIN_LLM_API_KEY is required for Gemini.")
             from langchain_google_genai import ChatGoogleGenerativeAI
 
-            return ChatGoogleGenerativeAI(model=model, google_api_key=api_key, temperature=0.4)
+            kw = {
+                "model": model,
+                "google_api_key": api_key,
+                "temperature": 0.4,
+            }
+            if base_url:
+                kw["base_url"] = base_url
+            return ChatGoogleGenerativeAI(**kw)
 
         if provider == "ollama":
             try:
