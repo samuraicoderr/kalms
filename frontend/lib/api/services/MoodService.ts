@@ -1,6 +1,6 @@
 import { apiClient } from "../ApiClient";
 import { BackendRoutes } from "../BackendRoutes";
-import type { MoodLog, MoodLogInput } from "../types/wellness.types";
+import type { MoodLog, MoodLogInput, MoodSummary } from "../types/wellness.types";
 
 type PaginatedResponse<T> = {
   count: number;
@@ -31,7 +31,14 @@ export class MoodService {
     );
     return Array.isArray(res.data) ? res.data : res.data.results;
   }
+
+  static async summary(days = 7): Promise<MoodSummary> {
+    const res = await apiClient.get<MoodSummary>(BackendRoutes.wellness.moodSummary, {
+      requiresAuth: true,
+      params: { days },
+    });
+    return res.data;
+  }
 }
 
 export default MoodService;
-

@@ -2,19 +2,8 @@
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { 
-  User, 
-  Settings, 
-  Trash2, 
-  HelpCircle, 
-  Download, 
-  Code2, 
-  ShoppingBag, 
-  Crown, 
   LogOut,
-  ChevronRight
 } from 'lucide-react';
-import { useRouter } from 'next/dist/client/components/navigation';
-import { FrontendRoutes } from '@/lib/api/FrontendRoutes';
 import { SmartAvatar } from '@/components/ui/SmartAvatar';
 
 // Types
@@ -25,15 +14,12 @@ interface DropdownItem {
   onClick?: () => void;
   href?: string;
   danger?: boolean;
-  hasArrow?: boolean;
   divider?: boolean;
 }
 
 interface UserDropdownProps {
   userName: string;
-  avatarUrl?: string;
   onLogout?: () => void;
-  onProfileClick?: () => void;
 }
 
 // Custom hook for click outside
@@ -59,61 +45,13 @@ const useClickOutside = (
   }, [ref, handler]);
 };
 
-// Custom hook for keyboard navigation
-const useKeyboardNavigation = (
-  isOpen: boolean,
-  itemCount: number,
-  onClose: () => void,
-  onSelect: (index: number) => void
-) => {
-  const [focusedIndex, setFocusedIndex] = useState<number>(-1);
-
-  useEffect(() => {
-    if (!isOpen) {
-      setFocusedIndex(-1);
-      return;
-    }
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      switch (e.key) {
-        case 'ArrowDown':
-          e.preventDefault();
-          setFocusedIndex((prev) => (prev + 1) % itemCount);
-          break;
-        case 'ArrowUp':
-          e.preventDefault();
-          setFocusedIndex((prev) => (prev - 1 + itemCount) % itemCount);
-          break;
-        case 'Enter':
-          e.preventDefault();
-          if (focusedIndex >= 0) {
-            onSelect(focusedIndex);
-          }
-          break;
-        case 'Escape':
-          e.preventDefault();
-          onClose();
-          break;
-      }
-    };
-
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, itemCount, focusedIndex, onClose, onSelect]);
-
-  return focusedIndex;
-};
-
 export const UserDropdown: React.FC<UserDropdownProps> = ({
   userName,
-  avatarUrl,
   onLogout,
-  onProfileClick,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
-  const router = useRouter();
 
   const toggleDropdown = useCallback(() => {
     setIsOpen((prev) => !prev);
@@ -128,36 +66,9 @@ export const UserDropdown: React.FC<UserDropdownProps> = ({
     onLogout?.();
   }, [closeDropdown, onLogout]);
 
-  const handleProfileClick = useCallback(() => {
-    closeDropdown();
-    onProfileClick?.();
-  }, [closeDropdown, onProfileClick]);
-
   const menuItems: DropdownItem[] = [
-    { id: 'profile', label: 'Profile', icon: <User size={18} />, onClick: handleProfileClick },
-    { id: 'admin', label: 'Admin Console', icon: <Settings size={18} />, onClick: () => router.push(FrontendRoutes.organization) },
-    { id: 'trash', label: 'Trash', icon: <Trash2 size={18} />, hasArrow: true, onClick: () => router.push(FrontendRoutes.trash) },
-    { id: 'learning', label: 'Learning Center', icon: <HelpCircle size={18} /> },
-    { id: 'apps', label: 'iOS, Android, Desktop Apps', icon: <Download size={18} /> },
-    { id: 'developer', label: 'Developer Hub', icon: <Code2 size={18} /> },
-    { id: 'marketplace', label: 'Miro Marketplace', icon: <ShoppingBag size={18} /> },
-    { id: 'upgrade', label: 'Upgrade', icon: <Crown size={18} /> },
-    { id: 'logout', label: 'Log out', icon: <LogOut size={18} />, onClick: handleLogout, divider: true },
+    { id: 'logout', label: 'Log out', icon: <LogOut size={18} />, onClick: handleLogout },
   ];
-
-  const handleSelect = useCallback((index: number) => {
-    const item = menuItems[index];
-    if (item.onClick) {
-      item.onClick();
-    }
-  }, [menuItems]);
-
-  const focusedIndex = useKeyboardNavigation(
-    isOpen,
-    menuItems.length,
-    closeDropdown,
-    handleSelect
-  );
 
   useClickOutside(dropdownRef, closeDropdown);
 
@@ -208,7 +119,7 @@ export const UserDropdown: React.FC<UserDropdownProps> = ({
               )}
               <MenuItem
                 item={item}
-                isFocused={focusedIndex === index}
+                isFocused={false}
                 onClick={() => {
                   if (item.onClick) item.onClick();
                   else closeDropdown();
@@ -265,9 +176,6 @@ const MenuItem: React.FC<MenuItemProps> = ({ item, isFocused, onClick }) => {
         </span>
         <span className="font-medium">{item.label}</span>
       </div>
-      {item.hasArrow && (
-        <ChevronRight size={16} className="text-gray-400" />
-      )}
     </>
   );
 
@@ -294,39 +202,6 @@ const MenuItem: React.FC<MenuItemProps> = ({ item, isFocused, onClick }) => {
     >
       {content}
     </button>
-  );
-};
-
-// Demo/Example usage
-export const Demo: React.FC = () => {
-  return (
-    <div className="min-h-screen bg-gray-50 p-8">
-      <div className="max-w-4xl mx-auto">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-2xl font-bold text-gray-900">User Dropdown Demo</h1>
-          <UserDropdown
-            userName="williamusanga23"
-            onLogout={() => console.log('Logging out...')}
-            onProfileClick={() => console.log('Opening profile...')}
-          />
-        </div>
-        
-        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
-          <p className="text-gray-600">
-            Click the user menu in the top right to see the dropdown in action.
-            Features include:
-          </p>
-          <ul className="mt-4 space-y-2 text-sm text-gray-600 list-disc list-inside">
-            <li>Keyboard navigation (Arrow keys, Enter, Escape)</li>
-            <li>Click outside to close</li>
-            <li>Smooth animations and transitions</li>
-            <li>Focus management and accessibility</li>
-            <li>Responsive design with mobile backdrop</li>
-            <li>TypeScript strict typing</li>
-          </ul>
-        </div>
-      </div>
-    </div>
   );
 };
 

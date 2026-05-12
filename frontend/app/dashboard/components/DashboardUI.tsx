@@ -1,30 +1,23 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import {
-  Activity,
   ArrowRight,
   BarChart3,
   BookOpenCheck,
-  Brain,
-  CalendarDays,
   CheckCircle2,
   Clock3,
   Heart,
   LineChart,
   LockKeyhole,
   MessageCircle,
-  Moon,
   ShieldCheck,
   SlidersHorizontal,
   Sparkles,
-  Target,
-  TrendingUp,
   UserRound,
-  Wind,
-  Zap,
   type LucideIcon,
 } from "lucide-react";
 import { Routes } from "@/lib/api/FrontendRoutes";
+import type { WeeklyMoodPoint } from "@/lib/api/types";
 
 export type Tone = "purple" | "blue" | "green" | "amber" | "rose" | "slate";
 
@@ -36,14 +29,6 @@ const toneClasses: Record<Tone, string> = {
   rose: "bg-[#fee2e2] text-[#b91c1c] border-[#fecaca]",
   slate: "bg-slate-100 text-slate-700 border-slate-200",
 };
-
-export const wellnessScores = [
-  { label: "PHQ-9", value: 6, max: 27, note: "mild", tone: "blue" as Tone },
-  { label: "GAD-7", value: 5, max: 21, note: "low", tone: "green" as Tone },
-  { label: "PSS-10", value: 17, max: 40, note: "moderate", tone: "amber" as Tone },
-];
-
-export const weeklyTrend = [42, 46, 40, 55, 49, 62, 68];
 
 export const assessmentCards = [
   {
@@ -73,34 +58,6 @@ export const assessmentCards = [
     tone: "amber" as Tone,
     href: Routes.dashboardRoutes.pss10,
   },
-];
-
-export const historyRows = [
-  { date: "May 9", assessment: "PHQ-9 + GAD-7", result: "Healthy", score: "11 total", tone: "green" as Tone },
-  { date: "May 2", assessment: "PSS-10", result: "At Risk", score: "19 stress", tone: "amber" as Tone },
-  { date: "Apr 25", assessment: "Full wellness scan", result: "Healthy", score: "24 total", tone: "green" as Tone },
-  { date: "Apr 18", assessment: "PHQ-9", result: "Mild", score: "7 mood", tone: "blue" as Tone },
-];
-
-export const chatMessages = [
-  {
-    role: "assistant",
-    text: "I'm here with you. What feels heaviest right now: school pressure, relationships, sleep, or something else?",
-  },
-  {
-    role: "user",
-    text: "Mostly school pressure. I keep feeling behind even when I study.",
-  },
-  {
-    role: "assistant",
-    text: "That can feel exhausting. Let's slow it down and pick one small next step for the next 20 minutes.",
-  },
-];
-
-export const recommendations = [
-  "Try a 4-minute breathing reset before your next study block.",
-  "Your stress scores rise near assessment weeks. Plan lighter evenings on those days.",
-  "Keep logging energy in the morning; it is your strongest signal for burnout prevention.",
 ];
 
 export const settingsGroups = [
@@ -243,11 +200,19 @@ export function MetricCard({
   );
 }
 
-export function MiniTrend({ values = weeklyTrend }: { values?: number[] }) {
+export function MiniTrend({ values }: { values: number[] }) {
+  if (values.length < 2) {
+    return (
+      <div className="flex h-36 w-full items-center justify-center rounded-2xl bg-slate-50 text-sm font-medium text-[#6b7280]">
+        Add more check-ins to see a trend.
+      </div>
+    );
+  }
+
   const points = values
     .map((value, index) => {
       const x = (index / Math.max(1, values.length - 1)) * 100;
-      const y = 100 - value;
+      const y = 100 - Math.min(100, Math.max(0, value));
       return `${x},${y}`;
     })
     .join(" ");
@@ -274,77 +239,6 @@ export function MiniTrend({ values = weeklyTrend }: { values?: number[] }) {
         strokeWidth="4"
       />
     </svg>
-  );
-}
-
-export function WellnessScoreList() {
-  return (
-    <div className="space-y-4">
-      {wellnessScores.map((score) => {
-        const width = Math.round((score.value / score.max) * 100);
-        return (
-          <div key={score.label}>
-            <div className="mb-2 flex items-center justify-between text-sm">
-              <span className="font-medium text-[#111827]">{score.label}</span>
-              <span className="text-[#6b7280]">
-                {score.value}/{score.max} - {score.note}
-              </span>
-            </div>
-            <div className="h-2 rounded-full bg-slate-100">
-              <div
-                className="h-full rounded-full bg-primary"
-                style={{ width: `${width}%` }}
-              />
-            </div>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
-export function DailyCheckInCard() {
-  const sliders = [
-    { label: "Mood", value: 7, icon: Heart },
-    { label: "Energy", value: 6, icon: Zap },
-    { label: "Stress", value: 4, icon: Wind },
-  ];
-
-  return (
-    <Card>
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <p className="text-sm font-medium text-primary">Daily check-in</p>
-          <h2 className="mt-2 text-xl font-semibold text-[#111827]">
-            How are you arriving today?
-          </h2>
-        </div>
-        <SoftIcon icon={Heart} tone="purple" />
-      </div>
-      <div className="mt-6 space-y-5">
-        {sliders.map((item) => (
-          <label key={item.label} className="block">
-            <span className="mb-2 flex items-center justify-between text-sm">
-              <span className="inline-flex items-center gap-2 font-medium text-[#111827]">
-                <item.icon size={16} className="text-primary" />
-                {item.label}
-              </span>
-              <span className="text-[#6b7280]">{item.value}/10</span>
-            </span>
-            <input
-              type="range"
-              min={1}
-              max={10}
-              defaultValue={item.value}
-              className="w-full accent-primary"
-            />
-          </label>
-        ))}
-      </div>
-      <button className="mt-6 w-full rounded-full bg-primary px-5 py-3 text-sm font-semibold text-white transition hover:bg-primary-strong">
-        Save today's check-in
-      </button>
-    </Card>
   );
 }
 
@@ -392,13 +286,6 @@ export function SafetyNote() {
   );
 }
 
-export const dashboardMetrics = [
-  { icon: BookOpenCheck, label: "Assessments", value: "12", detail: "3 this month", tone: "purple" as Tone },
-  { icon: Target, label: "Check-in streak", value: "7 days", detail: "steady", tone: "green" as Tone },
-  { icon: Brain, label: "Current status", value: "Healthy", detail: "low risk", tone: "blue" as Tone },
-  { icon: TrendingUp, label: "Trend", value: "+8%", detail: "improving", tone: "amber" as Tone },
-];
-
 export const quickActions = [
   { icon: BookOpenCheck, title: "Start assessment", href: Routes.dashboardRoutes.startAssessment },
   { icon: MessageCircle, title: "Open companion", href: Routes.dashboardRoutes.chat },
@@ -406,100 +293,34 @@ export const quickActions = [
   { icon: LineChart, title: "View insights", href: Routes.dashboardRoutes.insights },
 ];
 
-export const moodWeek = [
-  { day: "Mon", mood: "calm", value: 72 },
-  { day: "Tue", mood: "tired", value: 58 },
-  { day: "Wed", mood: "steady", value: 64 },
-  { day: "Thu", mood: "stressed", value: 46 },
-  { day: "Fri", mood: "hopeful", value: 70 },
-  { day: "Sat", mood: "rested", value: 82 },
-  { day: "Sun", mood: "clear", value: 76 },
-];
+export function MoodBars({ points }: { points: WeeklyMoodPoint[] }) {
+  const hasLogs = points.some((point) => point.has_log);
 
-export function MoodBars() {
+  if (!hasLogs) {
+    return (
+      <div className="mt-6 flex h-40 items-center justify-center rounded-2xl bg-slate-50 text-center text-sm font-medium text-[#6b7280]">
+        Your saved mood logs will appear here.
+      </div>
+    );
+  }
+
   return (
     <div className="grid grid-cols-7 items-end gap-3 pt-6">
-      {moodWeek.map((item) => (
-        <div key={item.day} className="text-center">
-          <div className="mx-auto flex h-40 w-full max-w-10 items-end rounded-full bg-slate-100 p-1">
-            <div
-              className="w-full rounded-full bg-primary"
-              style={{ height: `${item.value}%` }}
-            />
+      {points.map((item) => {
+        const value = item.wellness_score === null ? 0 : Math.round((item.wellness_score / 30) * 100);
+        return (
+          <div key={item.date} className="text-center">
+            <div className="mx-auto flex h-40 w-full max-w-10 items-end rounded-full bg-slate-100 p-1">
+              <div
+                className={`w-full rounded-full ${item.has_log ? "bg-primary" : "bg-slate-200"}`}
+                style={{ height: `${Math.max(8, value)}%` }}
+              />
+            </div>
+            <p className="mt-3 text-xs font-medium text-[#111827]">{item.day_label}</p>
+            <p className="mt-1 text-[11px] text-[#9ca3af]">{item.has_log ? item.mood_label : "no log"}</p>
           </div>
-          <p className="mt-3 text-xs font-medium text-[#111827]">{item.day}</p>
-          <p className="mt-1 text-[11px] text-[#9ca3af]">{item.mood}</p>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-export function CompanionPreview() {
-  return (
-    <Card className="min-h-[520px]">
-      <div className="flex items-center justify-between border-b border-[#e5e7eb] pb-4">
-        <div className="flex items-center gap-3">
-          <SoftIcon icon={Sparkles} tone="purple" />
-          <div>
-            <h2 className="font-semibold text-[#111827]">Kalms AI Companion</h2>
-            <p className="text-sm text-[#6b7280]">Supportive guidance, not diagnosis</p>
-          </div>
-        </div>
-        <span className="rounded-full bg-green-50 px-3 py-1 text-xs font-medium text-green-700">Online</span>
-      </div>
-      <div className="mt-6 space-y-4">
-        {chatMessages.map((message, index) => (
-          <div
-            key={index}
-            className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
-          >
-            <p
-              className={`max-w-[82%] rounded-[22px] px-4 py-3 text-sm leading-6 ${
-                message.role === "user"
-                  ? "bg-primary text-white"
-                  : "bg-slate-50 text-[#111827]"
-              }`}
-            >
-              {message.text}
-            </p>
-          </div>
-        ))}
-      </div>
-      <div className="mt-8 rounded-[22px] border border-[#e5e7eb] bg-slate-50 p-3">
-        <div className="flex items-center gap-3">
-          <input
-            aria-label="Message Kalms AI Companion"
-            placeholder="Type what you are feeling..."
-            className="min-w-0 flex-1 bg-transparent px-2 py-2 text-sm outline-none placeholder:text-[#9ca3af]"
-          />
-          <button className="rounded-full bg-primary px-4 py-2 text-sm font-semibold text-white">
-            Send
-          </button>
-        </div>
-      </div>
-    </Card>
-  );
-}
-
-export function InsightList() {
-  const insights = [
-    { icon: Moon, title: "Sleep has the strongest link to your mood", body: "Lower energy logs usually follow shorter nights. Protect one consistent bedtime this week." },
-    { icon: CalendarDays, title: "Stress rises before deadlines", body: "Your highest stress days appear 24-48 hours before academic submissions." },
-    { icon: Activity, title: "Check-ins are becoming steadier", body: "You logged five of the last seven days, enough to start seeing useful patterns." },
-  ];
-
-  return (
-    <div className="space-y-4">
-      {insights.map((insight) => (
-        <div key={insight.title} className="flex gap-4 rounded-[18px] border border-[#e5e7eb] bg-white p-4">
-          <SoftIcon icon={insight.icon} tone="purple" />
-          <div>
-            <h3 className="font-semibold text-[#111827]">{insight.title}</h3>
-            <p className="mt-1 text-sm leading-6 text-[#6b7280]">{insight.body}</p>
-          </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }

@@ -16,8 +16,10 @@ from src.assessments.serializers import (
     RecommendationSerializer,
 )
 from src.assessments.services import submit_assessment
+from src.assessments.questions import get_questionnaire_definitions
 from src.moods.models import MoodLog
 from src.moods.serializers import MoodLogSerializer
+from src.moods.services import build_mood_summary
 
 
 class AssessmentViewSet(
@@ -48,6 +50,10 @@ class AssessmentViewSet(
         if self.action == "submit":
             return AssessmentSubmissionSerializer
         return AssessmentSerializer
+
+    @action(detail=False, methods=["get"])
+    def questionnaires(self, request):
+        return Response({"results": get_questionnaire_definitions()})
 
     @action(detail=False, methods=["post"])
     def submit(self, request):
@@ -108,23 +114,7 @@ def current_streak(user) -> int:
 
 
 def weekly_mood(user) -> list[dict]:
-    start = timezone.localdate() - timedelta(days=6)
-    logs = {log.log_date: log for log in MoodLog.objects.filter(user=user, log_date__gte=start)}
-    output = []
-    for offset in range(7):
-        day = start + timedelta(days=offset)
-        log = logs.get(day)
-        output.append(
-            {
-                "date": day.isoformat(),
-                "mood_score": log.mood_score if log else None,
-                "energy_score": log.energy_score if log else None,
-                "stress_score": log.stress_score if log else None,
-                "wellness_score": log.wellness_score if log else None,
-                "mood_label": log.mood_label if log else "",
-            }
-        )
-    return output
+    return build_mood_summary(user=user, days=7)["points"]
 
 
 class DashboardViewSet(viewsets.ViewSet):
@@ -161,10 +151,78 @@ class DashboardViewSet(viewsets.ViewSet):
                 },
                 "latest_assessment": AssessmentSerializer(latest_assessment, context={"request": request}).data if latest_assessment else None,
                 "weekly_mood": weekly_mood(request.user),
+                "mood_summary": build_mood_summary(user=request.user, days=7),
                 "today_mood_log": MoodLogSerializer(
                     MoodLog.objects.filter(user=request.user, log_date=timezone.localdate()).first(),
                     context={"request": request},
                 ).data if MoodLog.objects.filter(user=request.user, log_date=timezone.localdate()).exists() else None,
                 "recommendations": RecommendationSerializer(recommendations, many=True).data,
+            }
+        )
+
+
+class InsightsViewSet(viewsets.ViewSet):
+    permission_classes = [IsAuthenticated]
+
+    @action(detail=False, methods=["get"])
+    def summary(self, request):
+        mood_summary = build_mood_summary(user=request.user, days=7)
+        points = mood_summary["points"]
+        logged_points = [point for point in points if point["has_log"]]
+        highest_stress = max(logged_points, key=lambda point: point["stress_score"] or 0, default=None)
+        latest_assessment = (
+            Assessment.objects.filter(user=request.user, status=AssessmentStatus.COMPLETED)
+            .select_related("prediction")
+            .first()
+        )
+        prediction = getattr(latest_assessment, "prediction", None) if latest_assessment else None
+
+        metrics = [
+            {
+                "key": "wellness_direction",
+                "label": "Wellness direction",
+                "value": (prediction.trend_signal if prediction else TrendSignal.UNKNOWN),
+                "detail": "weekly",
+            },
+            {
+                "key": "high_stress_window",
+                "label": "High stress window",
+                "value": highest_stress["day_label"] if highest_stress else "Not enough data",
+                "detail": "from check-ins",
+            },
+            {
+                "key": "check_in_habit",
+                "label": "Check-in habit",
+                "value": f"{mood_summary['count']}/7 days",
+                "detail": "this week",
+            },
+        ]
+        cards = [
+            {
+                "key": "mood_energy",
+                "title": "Mood and energy are your clearest signals",
+                "body": "Keep logging both together. The pattern helps Kalms spot pressure before it feels too heavy.",
+            },
+            {
+                "key": "stress_window",
+                "title": "Stress is easiest to manage when it is named early",
+                "body": (
+                    f"Your highest saved stress check-in in this range was on {highest_stress['day_label']}."
+                    if highest_stress
+                    else "Add a few check-ins this week so Kalms can identify your stress windows."
+                ),
+            },
+            {
+                "key": "next_step",
+                "title": "One steady habit is enough for the MVP",
+                "body": "A daily check-in plus a periodic assessment gives the dashboard enough context to stay useful.",
+            },
+        ]
+        return Response(
+            {
+                "metrics": metrics,
+                "summary": "Your insights are based on recent mood logs and your latest completed assessment.",
+                "trend_points": points,
+                "cards": cards,
             }
         )

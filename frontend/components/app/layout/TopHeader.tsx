@@ -1,11 +1,10 @@
 "use client";
 
 import React from "react";
-import { usePathname, useRouter } from "next/navigation";
-import { Bell, Menu, Search } from "lucide-react";
+import { usePathname } from "next/navigation";
+import { Menu } from "lucide-react";
 import UserDropdown from "../fragments/UserDropdown";
 import { useRequiredAuth } from "@/lib/api/auth/authContext";
-import appConfig from "@/lib/appconfig";
 import { FrontendRoutes } from "@/lib/api/FrontendRoutes";
 
 interface TopHeaderProps {
@@ -24,12 +23,9 @@ const pageTitles: Record<string, string> = {
   [FrontendRoutes.dashboardRoutes.chat]: "Chat companion",
   [FrontendRoutes.dashboardRoutes.assessmentHistory]: "Assessment history",
   [FrontendRoutes.dashboardRoutes.insights]: "Insights",
-  [FrontendRoutes.dashboardRoutes.settings]: "Settings",
-  [FrontendRoutes.dashboardRoutes.profile]: "Profile",
 };
 
 export default function TopHeader({ onMenuToggle }: TopHeaderProps) {
-  const router = useRouter();
   const pathname = usePathname();
   const { user, logout } = useRequiredAuth();
 
@@ -38,8 +34,6 @@ export default function TopHeader({ onMenuToggle }: TopHeaderProps) {
     user?.username ||
     `${user?.first_name ?? ""} ${user?.last_name ?? ""}`.trim() ||
     "Student";
-  const avatarUrl =
-    user?.profile_picture || user?.picture_url || appConfig.media.avatarExample;
 
   return (
     <header className="flex min-h-16 flex-shrink-0 items-center justify-between gap-3 border-b border-[#e5e7eb] bg-white/90 px-4 backdrop-blur md:px-6">
@@ -59,28 +53,10 @@ export default function TopHeader({ onMenuToggle }: TopHeaderProps) {
         </div>
       </div>
 
-      <div className="hidden max-w-sm flex-1 items-center rounded-full border border-[#e5e7eb] bg-[#f8fafc] px-4 py-2 md:flex">
-        <Search size={16} className="text-[#9ca3af]" />
-        <input
-          aria-label="Search Kalms"
-          placeholder="Search insights, assessments..."
-          className="min-w-0 flex-1 bg-transparent px-3 text-sm outline-none placeholder:text-[#9ca3af]"
-        />
-      </div>
-
       <div className="flex items-center gap-2">
-        <button
-          className="relative rounded-full p-2 text-[#6b7280] transition hover:bg-slate-100 hover:text-[#111827]"
-          aria-label="Notifications"
-        >
-          <Bell size={20} />
-          <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-primary ring-2 ring-white" />
-        </button>
         <UserDropdown
           userName={userName}
-          avatarUrl={avatarUrl as string}
           onLogout={logout}
-          onProfileClick={() => router.push(FrontendRoutes.dashboardRoutes.profile)}
         />
       </div>
     </header>

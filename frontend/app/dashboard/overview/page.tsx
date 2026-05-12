@@ -37,7 +37,10 @@ export default function OverviewPage() {
     day: "numeric",
   }).format(new Date());
 
-  const weeklyValues = summary?.weekly_mood.map((point) => point.wellness_score ?? 45) ?? [42, 46, 40, 55, 49, 62, 68];
+  const weeklyValues =
+    summary?.weekly_mood
+      .filter((point) => point.wellness_score !== null)
+      .map((point) => Math.round(((point.wellness_score ?? 0) / 30) * 100)) ?? [];
   const scores = summary?.latest_scores ?? { phq9: null, gad7: null, pss10: null, total: 0 };
 
   return (

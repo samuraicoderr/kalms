@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import { Card, MiniTrend, PageHeader, PrimaryLink, SecondaryLink, SoftIcon } from "../../components/DashboardUI";
 import { Routes } from "@/lib/api/FrontendRoutes";
 import { AssessmentService } from "@/lib/api/services/AssessmentService";
-import type { Assessment } from "@/lib/api/types";
+import { DashboardService } from "@/lib/api/services/DashboardService";
+import type { Assessment, WeeklyMoodPoint } from "@/lib/api/types";
 import { Brain, HeartPulse, Lightbulb, ShieldCheck } from "lucide-react";
 
 function label(value?: string | null) {
@@ -13,16 +14,23 @@ function label(value?: string | null) {
 
 export default function AssessmentResultsPage() {
   const [assessment, setAssessment] = useState<Assessment | null>(null);
+  const [trendPoints, setTrendPoints] = useState<WeeklyMoodPoint[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    AssessmentService.latest()
-      .then(setAssessment)
+    Promise.all([AssessmentService.latest(), DashboardService.summary()])
+      .then(([latest, summary]) => {
+        setAssessment(latest);
+        setTrendPoints(summary.weekly_mood);
+      })
       .finally(() => setLoading(false));
   }, []);
 
   const prediction = assessment?.prediction;
   const scores = assessment?.score_summary ?? { phq9: null, gad7: null, pss10: null, total: 0 };
+  const trendValues = trendPoints
+    .filter((point) => point.wellness_score !== null)
+    .map((point) => Math.round(((point.wellness_score ?? 0) / 30) * 100));
 
   return (
     <div className="space-y-8">
@@ -88,7 +96,7 @@ export default function AssessmentResultsPage() {
             </div>
           </div>
           <div className="mt-4">
-            <MiniTrend values={[54, 50, 48, 53, 57, 61, 65]} />
+            <MiniTrend values={trendValues} />
           </div>
         </Card>
 

@@ -1,6 +1,6 @@
 import { apiClient } from "../ApiClient";
 import { BackendRoutes } from "../BackendRoutes";
-import type { DashboardSummary } from "../types/wellness.types";
+import type { DashboardSummary, InsightsSummary } from "../types/wellness.types";
 
 export class DashboardService {
   static async summary(): Promise<DashboardSummary> {
@@ -9,7 +9,13 @@ export class DashboardService {
     });
     return res.data;
   }
+
+  static async insights(): Promise<InsightsSummary> {
+    const res = await apiClient.get<InsightsSummary>(BackendRoutes.wellness.insightsSummary, {
+      requiresAuth: true,
+    });
+    return res.data;
+  }
 }
 
 export default DashboardService;
-

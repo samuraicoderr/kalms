@@ -83,11 +83,26 @@ export interface MoodLogInput {
 
 export interface WeeklyMoodPoint {
   date: string;
+  day_label: string;
   mood_score: number | null;
   energy_score: number | null;
   stress_score: number | null;
   wellness_score: number | null;
   mood_label: string;
+  has_log: boolean;
+}
+
+export interface MoodSummary {
+  date_from: string;
+  date_to: string;
+  days: number;
+  count: number;
+  averages: {
+    mood: number | null;
+    energy: number | null;
+    stress: number | null;
+  };
+  points: WeeklyMoodPoint[];
 }
 
 export interface DashboardSummary {
@@ -98,8 +113,57 @@ export interface DashboardSummary {
   latest_scores: Assessment["score_summary"];
   latest_assessment: Assessment | null;
   weekly_mood: WeeklyMoodPoint[];
+  mood_summary: MoodSummary;
   today_mood_log: MoodLog | null;
   recommendations: Recommendation[];
+}
+
+export interface QuestionnaireAnswerOption {
+  value: number;
+  label: string;
+}
+
+export interface QuestionnaireQuestion {
+  number: number;
+  key: string;
+  prompt: string;
+  is_reverse_scored: boolean;
+}
+
+export interface QuestionnaireDefinition {
+  assessment_type: Exclude<AssessmentType, "full_scan">;
+  version: string;
+  title: string;
+  description: string;
+  max_score: number;
+  answer_scale: QuestionnaireAnswerOption[];
+  questions: QuestionnaireQuestion[];
+}
+
+export interface InsightMetric {
+  key: string;
+  label: string;
+  value: string;
+  helper: string;
+}
+
+export interface InsightCard {
+  key: string;
+  title: string;
+  body: string;
+  tone: "positive" | "warning" | "neutral";
+}
+
+export interface InsightsSummary {
+  metrics: InsightMetric[];
+  summary: {
+    latest_category: WellnessCategory | null;
+    trend_signal: TrendSignal;
+    latest_scores: Assessment["score_summary"];
+    mood_averages: MoodSummary["averages"];
+  };
+  trend_points: WeeklyMoodPoint[];
+  cards: InsightCard[];
 }
 
 export interface ChatConversation {
@@ -124,4 +188,3 @@ export interface ChatMessage {
   token_count: number | null;
   created_at: string;
 }
-

@@ -31,3 +31,21 @@ class MoodLogTests(APITestCase):
         self.assertEqual(update_response.status_code, 200)
         self.assertEqual(MoodLog.objects.filter(user=self.user, log_date=timezone.localdate()).count(), 1)
         self.assertEqual(MoodLog.objects.get(user=self.user).stress_score, 5)
+
+    def test_summary_returns_seven_day_points_and_averages(self):
+        MoodLog.objects.create(
+            user=self.user,
+            log_date=timezone.localdate(),
+            mood_score=8,
+            energy_score=6,
+            stress_score=3,
+        )
+
+        response = self.client.get(reverse("mood-logs-summary"), {"days": 7})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["days"], 7)
+        self.assertEqual(response.data["count"], 1)
+        self.assertEqual(len(response.data["points"]), 7)
+        self.assertEqual(response.data["averages"]["mood"], 8.0)
+        self.assertTrue(response.data["points"][-1]["has_log"])

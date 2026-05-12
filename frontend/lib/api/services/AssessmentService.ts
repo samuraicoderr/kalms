@@ -1,6 +1,11 @@
 import { apiClient } from "../ApiClient";
 import { BackendRoutes } from "../BackendRoutes";
-import type { Assessment, AssessmentSubmission, Recommendation } from "../types/wellness.types";
+import type {
+  Assessment,
+  AssessmentSubmission,
+  QuestionnaireDefinition,
+  Recommendation,
+} from "../types/wellness.types";
 
 type PaginatedResponse<T> = {
   count: number;
@@ -43,7 +48,14 @@ export class AssessmentService {
     );
     return normalizeList(res.data);
   }
+
+  static async questionnaires(): Promise<QuestionnaireDefinition[]> {
+    const res = await apiClient.get<{ results: QuestionnaireDefinition[] }>(
+      BackendRoutes.wellness.questionnaires,
+      { requiresAuth: true }
+    );
+    return res.data.results;
+  }
 }
 
 export default AssessmentService;
-

@@ -1,128 +1,45 @@
-# Kalms MVP Backend and Frontend Integration Plan
+# Kalms MVP Backend/Frontend Plan
 
-This plan picks up from the current data model work and focuses only on what is needed to ship a usable MVP.
+## Agent Handoff Instructions
 
-## Backend MVP Remaining
+Use this file as the source of truth for remaining MVP work. When you complete an item, change its checkbox from `[ ]` to `[x]`, add a short dated note with the files touched, and leave it in place under the same section until the user asks for cleanup. If you split an item, add the new child items directly under it so the next agent can continue without rereading the whole codebase.
 
-1. Build API serializers and viewsets for:
-   - assessments: create draft, submit PHQ-9/GAD-7/PSS-10/full scan, list history, retrieve result detail
-   - mood logs: create/update today's check-in, list logs, weekly/monthly summaries
-   - AI chat: create conversation, list conversations, send message, list messages
-   - recommendations: list active recommendations, dismiss recommendation
+## Completed Hardcoded Data Remediation
 
-2. Add authenticated API routes under `/api/v1/` for the dashboard modules:
-   - `/assessments/`
-   - `/assessments/latest/`
-   - `/assessments/history/`
-   - `/mood-logs/`
-   - `/mood-logs/today/`
-   - `/chat/conversations/`
-   - `/dashboard/summary/`
+- [x] `DashboardUI.tsx` mock exports removed/refactored. Completed 2026-05-11. Removed hardcoded `wellnessScores`, `weeklyTrend`, `historyRows`, `chatMessages`, `recommendations`, `dashboardMetrics`, and `moodWeek`; deleted unused mock components; made `MiniTrend` and `MoodBars` prop-driven. Files touched: `frontend/app/dashboard/components/DashboardUI.tsx`, `frontend/app/dashboard/overview/page.tsx`, `frontend/app/dashboard/assessments/results/page.tsx`.
 
-3. Add questionnaire definitions in code for the fixed MVP forms:
-   - PHQ-9: 9 prompts, 0-3 answers, total score out of 27
-   - GAD-7: 7 prompts, 0-3 answers, total score out of 21
-   - PSS-10: 10 prompts, 0-4 answers, reverse-score the required items, total score out of 40
+- [x] Mood bars and mood averages now come from backend summaries. Completed 2026-05-11. Added mood summary service logic and `/api/v1/mood-logs/summary/`; frontend mood tracker uses summary points and averages instead of hardcoded bars or first-page calculations. Files touched: `backend/src/moods/services.py`, `backend/src/moods/views.py`, `backend/src/moods/tests.py`, `frontend/app/dashboard/mood-tracker/page.tsx`, `frontend/lib/api/services/MoodService.ts`, `frontend/lib/api/types/wellness.types.ts`.
 
-4. Implement scoring and validation services:
-   - reject incomplete submissions
-   - calculate scores server-side from submitted answers
-   - store the raw answer map in `Assessment.responses`
-   - mark submissions complete only after scoring succeeds
+- [x] Insights page is backend-driven for MVP. Completed 2026-05-11. Added `/api/v1/insights/summary/`, removed hardcoded insight cards, and wired metrics/cards/trend values from the API. Files touched: `backend/src/assessments/views.py`, `backend/src/assessments/urls.py`, `frontend/app/dashboard/insights/page.tsx`, `frontend/lib/api/services/DashboardService.ts`.
 
-5. Implement the Random Forest prediction service:
-   - define a stable input schema using PHQ-9, GAD-7, PSS-10, latest mood, energy, stress, and recent trend values
-   - load the trained model from a configured path
-   - return `healthy`, `at_risk`, or `distressed`
-   - store model name/version, confidence, input snapshot, and trend signal in `Prediction`
-   - provide a deterministic fallback rule while the model file is unavailable in local development
+- [x] Chat hardcoded prompt/status cleanup completed. Completed 2026-05-11. Moved suggested prompts into a documented constants file and replaced fixed `"Online"` copy with neutral `"Ready"`; backend chat reply logic now sits behind a service boundary with crisis-term fallback handling. Files touched: `frontend/app/dashboard/chat/page.tsx`, `frontend/app/dashboard/chat/prompts.ts`, `backend/src/ai_chats/services.py`, `backend/src/ai_chats/views.py`, `backend/src/ai_chats/serializers.py`.
 
-6. Implement the recommendation service:
-   - generate 2-4 practical recommendations after each completed assessment
-   - include higher-priority professional-support guidance for distressed results
-   - avoid diagnostic or treatment language
+- [x] Assessment questions are backend-owned. Completed 2026-05-11. Added questionnaire definitions with versioned scales/questions and wired `AssessmentForm` to fetch them instead of duplicating prompts in the client. Files touched: `backend/src/assessments/questions.py`, `backend/src/assessments/views.py`, `frontend/app/dashboard/components/AssessmentForm.tsx`, `frontend/lib/api/services/AssessmentService.ts`.
 
-7. Implement dashboard aggregation:
-   - total assessments
-   - current check-in streak
-   - latest wellness category
-   - trend indicator
-   - latest PHQ-9/GAD-7/PSS-10 score breakdown
-   - weekly mood/energy/stress chart data
+- [x] Recommendation templates moved out of assessment service. Completed 2026-05-11. Added versioned recommendation rules and kept frontend rendering backend-provided recommendation objects only. Files touched: `backend/src/assessments/recommendation_rules.py`, `backend/src/assessments/services.py`.
 
-8. Add permissions and privacy controls:
-   - every wellness endpoint must be scoped to `request.user`
-   - users must not be able to fetch another user's assessment, mood, prediction, recommendation, or chat data
-   - chat responses must include crisis/escalation guardrails before the LLM integration goes live
+- [x] Random Forest artifact branch covered by tests. Completed 2026-05-11. Fallback remains for MVP/dev, and tests now cover configured model loading. Files touched: `backend/src/assessments/tests.py`.
 
-9. Add tests:
-   - model validation for score ranges and one mood log per day
-   - assessment scoring for PHQ-9, GAD-7, and PSS-10
-   - prediction creation after assessment submission
-   - recommendation creation and dismissal
-   - API permission boundaries
-   - dashboard summary response shape
+- [x] Daily check-in no longer starts with optimistic non-neutral values. Completed 2026-05-11. Sliders initialize to neutral `5` and disable saving while today's log loads. Files touched: `frontend/app/dashboard/components/DailyCheckInForm.tsx`.
 
-10. Clean up legacy healthcare route definitions in the frontend route map or isolate them so they do not confuse Kalms API work.
+- [x] API route map narrowed to Kalms MVP routes. Completed 2026-05-11. Removed legacy beds/patients/admissions/housekeeping/alerts/reports route groups and added questionnaire, mood summary, and insights routes. Files touched: `frontend/lib/api/BackendRoutes.ts`.
 
-## Frontend Integration Remaining
+- [x] Unused legacy plan/template components removed. Completed 2026-05-11. Deleted stale plan/template components that were not part of Kalms MVP and were tied to missing config entries. Files touched: `frontend/components/app/plans/*`, `frontend/components/app/templates/*`.
 
-1. Add TypeScript API types for:
-   - `Assessment`
-   - `AssessmentSubmission`
-   - `Prediction`
-   - `Recommendation`
-   - `MoodLog`
-   - `DashboardSummary`
-   - `ChatConversation`
-   - `ChatMessage`
+- [x] Visible placeholder navigation hidden for MVP. Completed 2026-05-11. Sidebar and user dropdown now expose only wired MVP dashboard areas; old admin/trash/profile/settings/app-marketplace style entries were removed from visible navigation. Files touched: `frontend/components/app/layout/Sidebar.tsx`, `frontend/components/app/layout/TopHeader.tsx`, `frontend/components/app/fragments/UserDropdown.tsx`.
 
-2. Add frontend service modules:
-   - `AssessmentService`
-   - `MoodService`
-   - `DashboardService`
-   - `ChatService`
+## Remaining MVP Work
 
-3. Replace mock dashboard data with backend data:
-   - overview metrics
-   - latest assessment scores
-   - weekly wellness trend
-   - recommendations
-   - quick check-in state
+- [ ] Clean up or document the stale Postgres test database issue (`test_neondb`) so normal backend test commands do not prompt or fail in automation. Note 2026-05-11: focused tests pass with `USE_DEFAULT_BACKEND=True`; default database behavior still needs a team decision.
 
-4. Build real assessment screens:
-   - PHQ-9 form
-   - GAD-7 form
-   - PSS-10 form
-   - full wellness scan flow
-   - result loading state and error handling
+- [ ] Fix full-project frontend lint failures outside the new wellness/dashboard work. Note 2026-05-11: `npx.cmd tsc --noEmit` passes and targeted lint for touched MVP files passes, but full `npx.cmd eslint` still fails in older auth/API files such as `frontend/lib/api/ApiClient.ts`, OAuth callback pages, username onboarding pages, WebSocket hooks, and settings/user services.
 
-5. Wire the daily check-in controls:
-   - save today's mood, energy, stress, and optional note
-   - update the dashboard immediately after save
-   - prevent accidental duplicate daily logs by updating the existing log
+- [ ] Optional direct-route cleanup for hidden placeholder dashboard pages. Note 2026-05-11: placeholder pages were removed from visible MVP navigation, but files like `dashboard/settings/*`, `dashboard/profile`, `dashboard/organization`, `dashboard/chat/tips`, and similar direct routes still exist. Delete, redirect, or replace them if direct URL access should be blocked before launch.
 
-6. Wire assessment history:
-   - list completed assessments newest-first
-   - filter by assessment type
-   - open result detail
-   - export can remain a later enhancement unless required for submission
+## Verification
 
-7. Wire chat companion:
-   - create/reuse active conversation
-   - send user message to backend
-   - render assistant replies
-   - show safety boundary text in the UI
-   - keep suggested prompts as frontend helpers
-
-8. Add frontend quality states:
-   - loading skeletons
-   - empty states for new users
-   - API error messages that are calm and non-technical
-   - mobile checks for forms and charts
-
-9. Add integration checks:
-   - registration to dashboard path
-   - first assessment submission to results page
-   - first daily check-in to dashboard update
-   - chat message round trip
+- [x] Backend system check passed on 2026-05-11 with `DJANGO_DEBUG=True`.
+- [x] Backend focused tests passed on 2026-05-11 with `USE_DEFAULT_BACKEND=True`: `src.assessments`, `src.moods`, `src.ai_chats` ran 9 tests successfully.
+- [x] Frontend touched-file lint passed on 2026-05-11.
+- [x] Frontend TypeScript check passed on 2026-05-11 with `npx.cmd tsc --noEmit`.
+- [ ] Full frontend lint is not clean yet. See remaining lint item above.

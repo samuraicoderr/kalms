@@ -8,8 +8,8 @@ from src.ai_chats.serializers import (
     ChatConversationSerializer,
     ChatMessageSerializer,
     SendChatMessageSerializer,
-    create_chat_turn,
 )
+from src.ai_chats.services import create_chat_turn
 
 
 class ChatConversationViewSet(

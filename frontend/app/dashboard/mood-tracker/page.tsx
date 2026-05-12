@@ -5,19 +5,21 @@ import { Card, MoodBars, PageHeader, PrimaryLink, SoftIcon } from "../components
 import { DailyCheckInForm } from "../components/DailyCheckInForm";
 import { Routes } from "@/lib/api/FrontendRoutes";
 import { MoodService } from "@/lib/api/services/MoodService";
-import type { MoodLog } from "@/lib/api/types";
+import type { MoodLog, MoodSummary } from "@/lib/api/types";
 import { CalendarDays, Heart, NotebookPen, Wind, Zap } from "lucide-react";
 
 export default function MoodTrackerPage() {
   const [logs, setLogs] = useState<MoodLog[]>([]);
+  const [summary, setSummary] = useState<MoodSummary | null>(null);
 
   useEffect(() => {
     MoodService.list().then(setLogs).catch(() => setLogs([]));
+    MoodService.summary(7).then(setSummary).catch(() => setSummary(null));
   }, []);
 
-  const average = (key: "mood_score" | "energy_score" | "stress_score") => {
-    if (!logs.length) return "0.0";
-    return (logs.reduce((total, log) => total + log[key], 0) / logs.length).toFixed(1);
+  const average = (key: "mood" | "energy" | "stress") => {
+    const value = summary?.averages[key];
+    return value === null || value === undefined ? "0.0" : value.toFixed(1);
   };
 
   return (
@@ -36,20 +38,20 @@ export default function MoodTrackerPage() {
             <div>
               <p className="text-sm font-medium text-primary">This week</p>
               <h2 className="mt-2 text-2xl font-semibold text-[#111827]">
-                {logs.length ? "Your check-ins are building a pattern." : "Your first check-in will start the trend."}
+                {summary?.count ? "Your check-ins are building a pattern." : "Your first check-in will start the trend."}
               </h2>
             </div>
             <SoftIcon icon={CalendarDays} tone="blue" />
           </div>
-          <MoodBars />
+          <MoodBars points={summary?.points ?? []} />
         </Card>
       </div>
 
       <div className="grid gap-4 md:grid-cols-3">
         {[
-          { icon: Heart, title: "Mood average", value: `${average("mood_score")}/10`, body: "Based on saved logs", tone: "purple" as const },
-          { icon: Zap, title: "Energy average", value: `${average("energy_score")}/10`, body: "Based on saved logs", tone: "green" as const },
-          { icon: Wind, title: "Stress average", value: `${average("stress_score")}/10`, body: "Based on saved logs", tone: "amber" as const },
+          { icon: Heart, title: "Mood average", value: `${average("mood")}/10`, body: "Based on this week", tone: "purple" as const },
+          { icon: Zap, title: "Energy average", value: `${average("energy")}/10`, body: "Based on this week", tone: "green" as const },
+          { icon: Wind, title: "Stress average", value: `${average("stress")}/10`, body: "Based on this week", tone: "amber" as const },
         ].map((item) => (
           <Card key={item.title} className="p-5">
             <SoftIcon icon={item.icon} tone={item.tone} />

@@ -5,13 +5,7 @@ import { Card, PageHeader, SafetyNote, SoftIcon } from "../components/DashboardU
 import { ChatService } from "@/lib/api/services/ChatService";
 import type { ChatConversation, ChatMessage } from "@/lib/api/types";
 import { MessageCircle, Sparkles, Wind } from "lucide-react";
-
-const prompts = [
-  "I feel overwhelmed and need to slow down.",
-  "Help me plan a calmer study session.",
-  "I want to understand why my stress keeps rising.",
-  "Give me a short grounding exercise.",
-];
+import { SUGGESTED_CHAT_PROMPTS } from "./prompts";
 
 export default function ChatPage() {
   const [conversation, setConversation] = useState<ChatConversation | null>(null);
@@ -68,7 +62,7 @@ export default function ChatPage() {
                 <p className="text-sm text-[#6b7280]">Supportive guidance, not diagnosis</p>
               </div>
             </div>
-            <span className="rounded-full bg-green-50 px-3 py-1 text-xs font-medium text-green-700">Online</span>
+            <span className="rounded-full bg-green-50 px-3 py-1 text-xs font-medium text-green-700">Ready</span>
           </div>
           <div className="mt-6 space-y-4">
             {messages.map((message) => (
@@ -113,7 +107,7 @@ export default function ChatPage() {
               </div>
             </div>
             <div className="mt-5 grid gap-3">
-              {prompts.map((prompt) => (
+              {SUGGESTED_CHAT_PROMPTS.map((prompt) => (
                 <button key={prompt} onClick={() => send(prompt)} className="rounded-[18px] border border-[#e5e7eb] bg-[#f8fafc] p-4 text-left text-sm font-medium leading-6 text-[#111827] transition hover:border-primary/25 hover:bg-[#fbfaff]">
                   {prompt}
                 </button>

@@ -10,10 +10,10 @@ from src.assessments.models import (
     AssessmentType,
     Prediction,
     Recommendation,
-    RecommendationType,
     TrendSignal,
     WellnessCategory,
 )
+from src.assessments.recommendation_rules import get_recommendation_templates
 from src.assessments.questions import (
     GAD7_QUESTIONS,
     PHQ9_QUESTIONS,
@@ -182,62 +182,6 @@ def build_input_snapshot(assessment: Assessment, mood_log: MoodLog | None) -> di
     }
 
 
-def recommendation_templates(category: str, trend_signal: str) -> list[dict]:
-    if category == WellnessCategory.DISTRESSED:
-        return [
-            {
-                "recommendation_type": RecommendationType.PROFESSIONAL_SUPPORT,
-                "title": "Reach out for support",
-                "body": "Consider speaking with a trusted person or your university counselling service soon. You do not have to handle this alone.",
-                "priority": 1,
-            },
-            {
-                "recommendation_type": RecommendationType.BREATHING,
-                "title": "Use a short grounding reset",
-                "body": "Try breathing in for four counts, holding for four, and breathing out for six. Repeat three times before your next task.",
-                "priority": 2,
-            },
-        ]
-    if category == WellnessCategory.AT_RISK:
-        return [
-            {
-                "recommendation_type": RecommendationType.STUDY_BALANCE,
-                "title": "Protect one lighter study block",
-                "body": "Pick one demanding task for today and make the next block smaller than usual. Recovery time is part of the plan.",
-                "priority": 2,
-            },
-            {
-                "recommendation_type": RecommendationType.SLEEP,
-                "title": "Watch sleep and energy",
-                "body": "Low energy often makes stress feel louder. Keep one consistent bedtime target for the next few nights.",
-                "priority": 3,
-            },
-        ]
-
-    templates = [
-        {
-            "recommendation_type": RecommendationType.GENERAL_WELLNESS,
-            "title": "Keep the check-in habit",
-            "body": "Your current pattern looks steady. Keep logging mood, energy, and stress so changes are easier to notice early.",
-            "priority": 3,
-        },
-        {
-            "recommendation_type": RecommendationType.BREATHING,
-            "title": "Use a small reset before study",
-            "body": "A four-minute breathing pause before focused work can help keep stress from building quietly.",
-            "priority": 4,
-        },
-    ]
-    if trend_signal == TrendSignal.WORSENING:
-        templates.insert(0, {
-            "recommendation_type": RecommendationType.SOCIAL_SUPPORT,
-            "title": "Tell someone how the week is going",
-            "body": "Your recent check-ins are dipping. A short conversation with someone you trust can help you get grounded.",
-            "priority": 2,
-        })
-    return templates
-
-
 @transaction.atomic
 def submit_assessment(*, user, assessment_type: str, responses: dict, submitted_via: str = "web") -> Assessment:
     scores, normalized = calculate_scores(assessment_type, responses)
@@ -266,6 +210,6 @@ def submit_assessment(*, user, assessment_type: str, responses: dict, submitted_
     )
     Recommendation.objects.bulk_create(
         Recommendation(user=user, prediction=prediction, **template)
-        for template in recommendation_templates(prediction.category, trend_signal)
+        for template in get_recommendation_templates(prediction.category, trend_signal)
     )
     return assessment

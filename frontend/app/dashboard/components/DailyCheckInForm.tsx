@@ -7,23 +7,26 @@ import { Card, SoftIcon } from "./DashboardUI";
 import { Heart, Wind, Zap } from "lucide-react";
 
 export function DailyCheckInForm() {
-  const [mood, setMood] = useState(7);
-  const [energy, setEnergy] = useState(6);
-  const [stress, setStress] = useState(4);
+  const [mood, setMood] = useState(5);
+  const [energy, setEnergy] = useState(5);
+  const [stress, setStress] = useState(5);
   const [note, setNote] = useState("");
   const [saved, setSaved] = useState<MoodLog | null>(null);
   const [message, setMessage] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const [isLoadingToday, setIsLoadingToday] = useState(true);
 
   useEffect(() => {
-    MoodService.today().then((log) => {
-      if (!log) return;
-      setSaved(log);
-      setMood(log.mood_score);
-      setEnergy(log.energy_score);
-      setStress(log.stress_score);
-      setNote(log.note);
-    });
+    MoodService.today()
+      .then((log) => {
+        if (!log) return;
+        setSaved(log);
+        setMood(log.mood_score);
+        setEnergy(log.energy_score);
+        setStress(log.stress_score);
+        setNote(log.note);
+      })
+      .finally(() => setIsLoadingToday(false));
   }, []);
 
   async function save() {
@@ -93,12 +96,11 @@ export function DailyCheckInForm() {
       {message && <p className="mt-3 text-sm font-medium text-[#6b7280]">{message}</p>}
       <button
         onClick={save}
-        disabled={isSaving}
+        disabled={isSaving || isLoadingToday}
         className="mt-5 w-full rounded-full bg-primary px-5 py-3 text-sm font-semibold text-white transition hover:bg-primary-strong disabled:opacity-60"
       >
-        {isSaving ? "Saving..." : "Save today's check-in"}
+        {isLoadingToday ? "Loading check-in..." : isSaving ? "Saving..." : "Save today's check-in"}
       </button>
     </Card>
   );
 }
-

@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import {
@@ -11,13 +11,13 @@ import {
   LineChart,
   LogOut,
   MessageCircle,
-  Settings,
-  UserRound,
   X,
 } from "lucide-react";
 import appConfig from "@/lib/appconfig";
 import { FrontendRoutes } from "@/lib/api/FrontendRoutes";
 import { useRequiredAuth } from "@/lib/api/auth/authContext";
+import { DashboardService } from "@/lib/api/services/DashboardService";
+import type { DashboardSummary } from "@/lib/api/types";
 import { cn } from "@/lib/utils";
 import { SmartAvatar } from "@/components/ui/SmartAvatar";
 
@@ -35,14 +35,22 @@ const navItems = [
   { label: "Chat companion", href: FrontendRoutes.dashboardRoutes.chat, icon: MessageCircle },
   { label: "History", href: FrontendRoutes.dashboardRoutes.assessmentHistory, icon: BarChart3 },
   { label: "Insights", href: FrontendRoutes.dashboardRoutes.insights, icon: LineChart },
-  { label: "Profile", href: FrontendRoutes.dashboardRoutes.profile, icon: UserRound },
-  { label: "Settings", href: FrontendRoutes.dashboardRoutes.settings, icon: Settings },
 ];
+
+function titleCase(value: string | null) {
+  if (!value) return "No result";
+  return value.replace("_", " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
 
 export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const router = useRouter();
   const pathname = usePathname();
   const { user, logout } = useRequiredAuth();
+  const [summary, setSummary] = useState<DashboardSummary | null>(null);
+
+  useEffect(() => {
+    DashboardService.summary().then(setSummary).catch(() => setSummary(null));
+  }, []);
 
   const userName =
     user?.username ||
@@ -105,11 +113,11 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
           <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
             <div className="rounded-2xl bg-white p-3">
               <p className="text-[#9ca3af]">Status</p>
-              <p className="mt-1 font-semibold text-green-700">Healthy</p>
+              <p className="mt-1 font-semibold text-green-700">{titleCase(summary?.latest_category ?? null)}</p>
             </div>
             <div className="rounded-2xl bg-white p-3">
               <p className="text-[#9ca3af]">Streak</p>
-              <p className="mt-1 font-semibold text-primary">7 days</p>
+              <p className="mt-1 font-semibold text-primary">{summary?.current_streak ?? 0} days</p>
             </div>
           </div>
         </div>
@@ -142,7 +150,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
 
         <div className="border-t border-[#e5e7eb] p-4">
           <div className="mb-3 rounded-[18px] bg-[#ede7ff] p-4">
-            <p className="text-sm font-semibold text-primary">Today's anchor</p>
+            <p className="text-sm font-semibold text-primary">Today&apos;s anchor</p>
             <p className="mt-1 text-xs leading-5 text-primary/75">
               One honest check-in is enough progress for today.
             </p>

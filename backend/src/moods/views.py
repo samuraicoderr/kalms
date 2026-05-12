@@ -8,6 +8,7 @@ from rest_framework.response import Response
 
 from src.moods.models import MoodLog
 from src.moods.serializers import MoodLogSerializer
+from src.moods.services import build_mood_summary
 
 
 class MoodLogViewSet(
@@ -61,3 +62,11 @@ class MoodLogViewSet(
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    @action(detail=False, methods=["get"])
+    def summary(self, request):
+        try:
+            days = int(request.query_params.get("days", 7))
+        except (TypeError, ValueError):
+            days = 7
+        return Response(build_mood_summary(user=request.user, days=days))

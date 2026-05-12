@@ -1,3 +1,8 @@
+import os
+import pickle
+import tempfile
+from unittest.mock import patch
+
 from django.contrib.auth import get_user_model
 from django.urls import reverse
 from rest_framework.test import APITestCase
@@ -7,6 +12,14 @@ from src.moods.models import MoodLog
 
 
 User = get_user_model()
+
+
+class DummyModel:
+    def predict(self, rows):
+        return ["2"]
+
+    def predict_proba(self, rows):
+        return [[0.1, 0.2, 0.7]]
 
 
 def answer_map(count: int, value: int) -> dict[str, int]:
@@ -83,3 +96,66 @@ class AssessmentSubmissionTests(APITestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data["total_assessments"], 0)
+
+    def test_questionnaires_endpoint_returns_backend_owned_definitions(self):
+        response = self.client.get(reverse("assessments-questionnaires"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.data["results"]), 3)
+        self.assertEqual(response.data["results"][0]["assessment_type"], "phq9")
+        self.assertEqual(len(response.data["results"][0]["questions"]), 9)
+        self.assertEqual(response.data["results"][0]["version"], "mvp-v1")
+
+    def test_can_dismiss_recommendation(self):
+        response = self.client.post(
+            reverse("assessments-submit"),
+            {
+                "assessment_type": "gad7",
+                "responses": answer_map(7, 2),
+            },
+            format="json",
+        )
+        self.assertEqual(response.status_code, 201)
+        recommendation = Recommendation.objects.filter(user=self.user).first()
+
+        dismiss_response = self.client.post(
+            reverse("recommendations-dismiss", kwargs={"pk": recommendation.id}),
+            {},
+            format="json",
+        )
+
+        self.assertEqual(dismiss_response.status_code, 200)
+        recommendation.refresh_from_db()
+        self.assertFalse(recommendation.is_active)
+        self.assertIsNotNone(recommendation.dismissed_at)
+
+    def test_trained_model_artifact_is_used_when_configured(self):
+        with tempfile.NamedTemporaryFile(delete=False) as model_file:
+            pickle.dump(DummyModel(), model_file)
+            model_path = model_file.name
+
+        try:
+            with patch.dict(
+                os.environ,
+                {
+                    "KALMS_RANDOM_FOREST_MODEL_PATH": model_path,
+                    "KALMS_RANDOM_FOREST_MODEL_VERSION": "test-model-v1",
+                },
+            ):
+                response = self.client.post(
+                    reverse("assessments-submit"),
+                    {
+                        "assessment_type": "phq9",
+                        "responses": answer_map(9, 2),
+                    },
+                    format="json",
+                )
+        finally:
+            os.unlink(model_path)
+
+        self.assertEqual(response.status_code, 201)
+        prediction = Assessment.objects.get(user=self.user).prediction
+        self.assertEqual(prediction.category, "distressed")
+        self.assertEqual(prediction.model_name, "random_forest")
+        self.assertEqual(prediction.model_version, "test-model-v1")
+        self.assertEqual(str(prediction.confidence), "0.7000")
