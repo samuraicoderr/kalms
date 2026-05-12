@@ -7,7 +7,7 @@ class ChatMessageInline(admin.TabularInline):
     model = ChatMessage
     extra = 0
     readonly_fields = ("id", "created_at")
-    fields = ("id", "role", "content", "model_name", "created_at")
+    fields = ("id", "message_index", "role", "content", "model_name", "created_at")
 
 
 @admin.register(ChatConversation)
@@ -21,7 +21,7 @@ class ChatConversationAdmin(admin.ModelAdmin):
 
 @admin.register(ChatMessage)
 class ChatMessageAdmin(admin.ModelAdmin):
-    list_display = ("id", "conversation", "user", "role", "model_name", "created_at")
+    list_display = ("id", "conversation", "user", "message_index", "role", "model_name", "created_at")
     list_filter = ("role", "model_name", "created_at")
     search_fields = ("user__email", "content")
     readonly_fields = ("id", "created_at")

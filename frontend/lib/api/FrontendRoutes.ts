@@ -28,6 +28,7 @@ export const FrontendRoutes = {
     energyTracker: '/dashboard/mood-tracker/energy',
     emotionalTrends: '/dashboard/mood-tracker/trends',
     chat: '/dashboard/chat',
+    chatThread: (id: string) => `/dashboard/chats/${id}`,
     aiCompanion: '/dashboard/chat/companion',
     previousConversations: '/dashboard/chat/conversations',
     suggestedPrompts: '/dashboard/chat/prompts',

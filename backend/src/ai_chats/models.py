@@ -69,18 +69,33 @@ class ChatMessage(models.Model):
     safety_flags = models.JSONField(default=dict, blank=True)
     metadata = models.JSONField(default=dict, blank=True)
     token_count = models.PositiveIntegerField(null=True, blank=True)
+    message_index = models.PositiveIntegerField(default=0, db_index=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        ordering = ["created_at"]
+        ordering = ["message_index", "created_at"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["conversation", "message_index"],
+                name="unique_chat_message_index_per_conversation",
+            ),
+        ]
         indexes = [
-            models.Index(fields=["conversation", "created_at"]),
+            models.Index(fields=["conversation", "message_index"]),
             models.Index(fields=["user", "-created_at"]),
             models.Index(fields=["role", "-created_at"]),
         ]
 
     def save(self, *args, **kwargs):
         is_new = self._state.adding
+        if is_new and self.message_index == 0:
+            last_index = (
+                ChatMessage.objects.filter(conversation=self.conversation)
+                .order_by("-message_index")
+                .values_list("message_index", flat=True)
+                .first()
+            )
+            self.message_index = 0 if last_index is None else last_index + 1
         super().save(*args, **kwargs)
         if is_new:
             ChatConversation.objects.filter(pk=self.conversation_id).update(

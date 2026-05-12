@@ -29,7 +29,7 @@ export default function TopHeader({ onMenuToggle }: TopHeaderProps) {
   const pathname = usePathname();
   const { user, logout } = useRequiredAuth();
 
-  const title = pageTitles[pathname] || "Kalms";
+  const title = pathname.startsWith("/dashboard/chats/") ? "Chat companion" : pageTitles[pathname] || "Kalms";
   const userName =
     user?.username ||
     `${user?.first_name ?? ""} ${user?.last_name ?? ""}`.trim() ||

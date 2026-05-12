@@ -87,8 +87,11 @@ export const BackendRoutes = {
     chatConversations: `${API_VERSION}/chat/conversations/`,
     activeChatConversation: `${API_VERSION}/chat/conversations/active/`,
     chatConversationDetail: (id: string) => `${API_VERSION}/chat/conversations/${id}/`,
+    renameChatConversation: (id: string) => `${API_VERSION}/chat/conversations/${id}/rename/`,
     chatMessages: (id: string) => `${API_VERSION}/chat/conversations/${id}/messages/`,
     sendChatMessage: (id: string) => `${API_VERSION}/chat/conversations/${id}/send-message/`,
+    editChatMessage: (id: string) => `${API_VERSION}/chat/conversations/${id}/edit-message/`,
+    regenerateChatMessage: (id: string) => `${API_VERSION}/chat/conversations/${id}/regenerate-message/`,
   },
 
   passwordReset: {

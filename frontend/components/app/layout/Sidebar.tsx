@@ -126,6 +126,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
           {navItems.map((item) => {
             const isActive =
               pathname === item.href ||
+              (item.href === FrontendRoutes.dashboardRoutes.chat && pathname.startsWith("/dashboard/chats/")) ||
               (item.href !== FrontendRoutes.dashboardRoutes.overview &&
                 pathname.startsWith(item.href));
             const Icon = item.icon;

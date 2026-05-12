@@ -186,5 +186,12 @@ export interface ChatMessage {
   safety_flags: Record<string, unknown>;
   metadata: Record<string, unknown>;
   token_count: number | null;
+  message_index: number;
   created_at: string;
+}
+
+export interface ChatTurnResponse {
+  conversation: ChatConversation;
+  assistant_message: ChatMessage;
+  messages: ChatMessage[];
 }
