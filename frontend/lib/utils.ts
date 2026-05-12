@@ -32,3 +32,9 @@ export function interpretServerError(
 
   return messages;
 }
+
+export function isInvalidOrExpiredOnboardingTokenError(error: unknown): boolean {
+  return interpretServerError(error).some((message) =>
+    message.toLowerCase().includes("invalid or expired onboarding token")
+  );
+}

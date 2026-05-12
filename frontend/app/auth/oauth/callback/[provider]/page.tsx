@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "motion/react";
 import { InlineAlert, PrimaryButton, containerVariants, itemVariants } from "../../../components/AuthUI";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
@@ -19,6 +19,7 @@ function OAuthCallbackPageContent() {
   const searchParams = useSearchParams();
   const params = useParams<{ provider: string }>();
   const providerParam = params.provider;
+  const exchangeKeyRef = useRef<string | null>(null);
 
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -32,6 +33,10 @@ function OAuthCallbackPageContent() {
   }, [providerParam]);
 
   useLoginSuccess(loginResponse);
+
+  const cleanCallbackUrl = useCallback(() => {
+    window.history.replaceState({}, "", window.location.pathname);
+  }, []);
   
   const handleOAuthCallback = useCallback(async () => {
     if (!provider) {
@@ -44,15 +49,11 @@ function OAuthCallbackPageContent() {
     const code = searchParams.get("code");
     const state = searchParams.get("state");
     const oauthError = searchParams.get("error");
-    console.log("OAuth callback received with code:", code, "state:", state, "error:", oauthError);
-
-    // Clean OAuth params from URL immediately
-    // window.history.replaceState({}, "", window.location.pathname);
-    // console.log("cleaned url removed ?... part", window.location.search);
 
     // Provider returned an error (e.g. user denied access)
     if (oauthError) {
       const description = searchParams.get("error_description") || oauthError;
+      cleanCallbackUrl();
       setError(description);
       setIsLoading(false);
       return;
@@ -60,6 +61,10 @@ function OAuthCallbackPageContent() {
 
     // No authorization code means this isn't a valid callback
     if (!code) {
+      if (exchangeKeyRef.current?.startsWith(`${provider}:`)) {
+        return;
+      }
+
       setError(
         "No authorization code received from provider. Please try again.",
       );
@@ -69,12 +74,27 @@ function OAuthCallbackPageContent() {
 
     // Validate state (CSRF protection)
     if (state && !OAuthService.validateState(provider, state)) {
+      cleanCallbackUrl();
       setError(
-        "Session has expired",
+        "Session has expired.",
       );
       setIsLoading(false);
       return;
     }
+
+    const exchangeKey = `${provider}:${code}`;
+    if (exchangeKeyRef.current === exchangeKey) {
+      return;
+    }
+    exchangeKeyRef.current = exchangeKey;
+    // Mark an in-progress OAuth exchange so global auth initialization
+    // can avoid fetching /me while the exchange completes.
+    try {
+      sessionStorage.setItem("oauth_exchange", exchangeKey);
+    } catch (e) {
+      // ignore sessionStorage errors in private modes
+    }
+    cleanCallbackUrl();
 
     try {
       const redirectUri = OAuthService.getRedirectUri(
@@ -90,17 +110,21 @@ function OAuthCallbackPageContent() {
 
       setLoginResponse(response);
     } catch (err: unknown) {
-      console.dir(err);
       const details = interpretServerError(err);
       const message =
         details[0] ||
-        "OAuth authentication failed. Please try again.";
+        "OAuth authentication failed. Please start sign-in again.";
       setError(message);
     } finally {
       sessionStorage.removeItem("oauth_provider");
+      try {
+        sessionStorage.removeItem("oauth_exchange");
+      } catch (e) {
+        // ignore
+      }
       setIsLoading(false);
     }
-  }, [provider, searchParams]);
+  }, [cleanCallbackUrl, provider, searchParams]);
 
   useEffect(() => {
     handleOAuthCallback();

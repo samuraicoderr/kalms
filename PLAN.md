@@ -3,90 +3,45 @@
 ## Agent Handoff Instructions
 
 Use this file as the source of truth for the remaining MVP chat work. When you complete an item, change its checkbox from `[ ]` to `[x]`, add a short dated note with the files touched, and leave it in place under the same section until the user asks for cleanup. If you split an item, add the new child items directly under it so the next agent can continue without rereading the whole codebase.
+Make sure as you execute you update this file marking completed items and adding notes on what you did, so the next agent can pick up where you left off without needing to read the whole codebase again.
+Here's a sample format for an entry:
+- [x] <Task description> (Completed on YYYY-MM-DD)
+  - <Short note on what you did, including files touched and any important details.>+
+- [ ] <Next task description> (Not started)
+  - <Short note on what you plan to do, including files you expect to touch and any important details.>+
 
-## Backend: LangChain And Multi-Chat Integration
+## Remaining Work
 
-- [x] Replace the current MVP rule-based chat reply logic with LangChain. Completed 2026-05-12. Added `LangChainCompanionService`, removed the rule-based main path, and retained crisis guardrail handling before model calls. Files touched: `backend/src/ai_chats/services.py`, `backend/src/ai_chats/views.py`.
-  - Remove direct rule-based response generation from the main chat path.
-  - Keep crisis/safety guardrails around the LangChain flow so urgent language still receives safe escalation copy.
-  - Preserve the current API contract where possible so frontend integration can evolve without churn.
+This file previously listed many completed backend and frontend chat integration items; those have been completed and were removed from this document to keep the plan focused on the remaining priorities.
 
-- [x] Implement model-agnostic LangChain configuration. Completed 2026-05-12. Added provider/model/API-key environment configuration with OpenAI, Anthropic, Gemini, and Ollama factories plus clear configuration errors. Files touched: `backend/src/ai_chats/services.py`, `backend/pyproject.toml`.
-  - Use LangChain chat model interfaces rather than provider-specific code in views or serializers.
-  - Configure provider/model entirely via environment variables.
-  - Required environment variables should include `LANGCHAIN_LLM_PROVIDER`, `LANGCHAIN_LLM_MODEL`, and `LANGCHAIN_LLM_API_KEY`.
-  - Support provider choices such as OpenAI, Anthropic, Gemini, and Ollama where practical for MVP.
-  - Fail clearly when provider configuration is missing or unsupported.
+### Auth System: OAuth And Onboarding Carryover
 
-- [x] Add LangChain tools for authenticated user context. Completed 2026-05-12. Added user-scoped tools for recent mood logs, latest assessment/prediction, and active recommendations. Files touched: `backend/src/ai_chats/services.py`, `backend/src/ai_chats/tests.py`.
-  - Create a tool for fetching recent mood logs for the current authenticated user.
-  - Create a tool for fetching the latest assessment scores and prediction for the current authenticated user.
-  - Create a tool for fetching active recommendations for the current authenticated user.
-  - Ensure tools are user-scoped and cannot access another user's data.
-  - Let the LLM decide when to call these tools based on the user's prompt.
+- [x] Fix OAuth callback redirect hanging after `login-or-register` returns an onboarding response. Reported 2026-05-12 from production route `/auth/oauth/callback/google?...`: the callback page says `Redirecting...` forever until the user refreshes. Network trace shows `POST /oauth/google/login-or-register/` succeeds with `onboarding_required: true`, `onboarding_status: "needs_password"`, `onboarding_flow`, and `onboarding_token`, but the frontend then makes `/me` requests instead of sending the user through onboarding.
+  - Start with `frontend/app/auth/oauth/callback/[provider]/page.tsx`, `frontend/app/pages/oauth/callback/[provider]/page.tsx`, and `frontend/app/auth/hooks/useLoginSuccess.ts`.
+  - `useLoginSuccess` currently returns early when `authUtils.isAuthenticated()` is true, which can skip the onboarding branch and leave the callback page with no navigation. Make onboarding and MFA responses win over stale/full auth state.
+  - Persist the `onboarding_token`, `onboarding_status`, and `onboarding_flow` from OAuth before any `/me` fetch happens.
+  - Route the user directly to `getOnboardingRoute(response.onboarding_status)`, e.g. `/auth/onboarding/password` for `needs_password`.
+  - Prevent duplicate callback exchanges from React Strict Mode or dependency churn by guarding each OAuth `code`/`provider` pair once the exchange starts.
+  - Clean the callback URL after reading `code`, `state`, and provider errors so refresh does not reuse an already-consumed authorization code.
+  - Add error handling for an expired/invalid reused OAuth code that sends the user back to login with a clear message.
 
-- [x] Update backend chat support for multiple chat threads per user. Completed 2026-05-12. Added/refined list, create, delete, and rename support using existing conversation ownership boundaries. Files touched: `backend/src/ai_chats/views.py`, `backend/src/ai_chats/serializers.py`, `backend/src/ai_chats/tests.py`.
-  - Add or refine endpoint for listing the authenticated user's chats.
-  - Add endpoint for creating a new chat.
-  - Add endpoint for deleting a chat.
-  - Add endpoint for renaming a chat.
-  - Ensure all chat queries are user-scoped.
+- [x] Audit and consolidate duplicate auth/onboarding route trees. The frontend currently has both `/auth/...` and legacy `/pages/...` auth/onboarding implementations, including duplicate OAuth callback pages. Decide which tree is canonical, then either remove the stale tree or keep it as a thin redirect so fixes do not drift. (btw pages is the the old stuff)
+  - Confirm all `FrontendRoutes` auth paths point to the canonical `/auth/...` routes.
+  - Check that OAuth redirect URI configuration uses the same callback route in local, Vercel preview, and production.
+  - Make sure old `/pages/oauth/callback/[provider]` behavior cannot silently diverge from `/auth/oauth/callback/[provider]`.
 
-- [x] Implement automatic chat naming. Completed 2026-05-12. Added title generation through the companion service with first-message truncation fallback. Files touched: `backend/src/ai_chats/services.py`, `backend/src/ai_chats/serializers.py`, `backend/src/ai_chats/tests.py`.
-  - When a new chat is created, generate a title from the user's first message and the AI's first response.
-  - Use a simple LangChain chain if configuration is available.
-  - Fall back to truncating the user's first message to roughly 50 characters if title generation fails.
+- [ ] Tighten onboarding integration after OAuth.
+  - Ensure every onboarding page can recover from the stored OAuth `onboarding_token` without requiring a password login first.
+  - Verify `needs_basic_information`, `needs_password`, `needs_profile_username`, `needs_profile_picture`, and `completed` transitions match the backend `onboarding_flow`.
+  - After the final onboarding step, exchange the onboarding token for login tokens exactly once and then fetch `/me`.
+  - Clear partial onboarding state only after token exchange succeeds, not before.
+  - Handle expired onboarding tokens by sending the user back through login/OAuth with a useful error.
 
-- [x] Implement message ordering and active branch history. Completed 2026-05-12. Added `message_index`, migration backfill, ordering constraints, and history scoped to the selected thread. Files touched: `backend/src/ai_chats/models.py`, `backend/src/ai_chats/migrations/0002_chatmessage_message_index.py`, `backend/src/ai_chats/admin.py`, `backend/src/ai_chats/tests.py`.
-  - Ensure chat messages have a stable per-thread index/order field if one does not already exist.
-  - The LLM should only receive messages from the active branch in index order.
-  - Add tests that prove message history is scoped to the selected chat thread.
-
-- [x] Implement message branching for user edit and AI regenerate flows. Completed 2026-05-12. Added edit/regenerate service methods and endpoints that prune messages after the selected index and regenerate against the active branch. Files touched: `backend/src/ai_chats/services.py`, `backend/src/ai_chats/views.py`, `backend/src/ai_chats/serializers.py`, `backend/src/ai_chats/tests.py`.
-  - Rule: when a user edits their message or regenerates an AI response at index `i`, that message becomes the new head of the conversation.
-  - Permanently delete all messages in the same chat with an index greater than `i`.
-  - For edited user messages, save the updated text, prune subsequent messages, and generate a fresh AI response from the active branch.
-  - For regenerated AI messages, prune from the AI message index onward as needed, then generate and save a fresh AI response for that branch.
-  - Add tests for pruning behavior, active branch history, edit flow, and regenerate flow.
-
-## Frontend: Full-Page Chat UI And Thread Management
-
-- [x] Add full-page chat thread route. Completed 2026-05-12. Added `/dashboard/chats/[id]` and adjusted the dashboard layout so chat threads use a full-height workspace instead of the standard page container. Files touched: `frontend/app/dashboard/chats/[id]/page.tsx`, `frontend/app/dashboard/layout.tsx`, `frontend/app/dashboard/chat/page.tsx`.
-  - Implement a route like `/dashboard/chats/[id]`.
-  - The chat interface should occupy the entire viewport minus the existing `Sidebar` and `TopHeader`.
-  - Remove standard dashboard page headers, page padding, and card/grid page layouts for this route.
-  - Use a full-height flex layout with message history and composer pinned into a usable chat experience.
-
-- [x] Add chat thread management UI. Completed 2026-05-12. Added an in-route thread rail with active thread state, switching, create, rename, and delete controls. Files touched: `frontend/app/dashboard/chats/[id]/page.tsx`.
-  - Add a sidebar panel or sheet inside the chat route for chat threads.
-  - Let users switch between chat threads.
-  - Let users create new threads.
-  - Let users delete threads.
-  - Let users rename threads.
-  - Visually indicate the active thread.
-
-- [x] Wire frontend chat services to the new multi-chat backend endpoints. Completed 2026-05-12. Added routes, service methods, response types, and active-thread navigation. Files touched: `frontend/lib/api/BackendRoutes.ts`, `frontend/lib/api/FrontendRoutes.ts`, `frontend/lib/api/services/ChatService.ts`, `frontend/lib/api/types/wellness.types.ts`, `frontend/components/app/layout/Sidebar.tsx`, `frontend/components/app/layout/TopHeader.tsx`.
-  - Add API routes for listing, creating, deleting, renaming, editing, and regenerating chat threads/messages.
-  - Update frontend chat types to include thread ids, titles, message indexes, and active branch data.
-  - Handle loading, empty, error, and optimistic update states carefully.
-
-- [x] Add copy actions to messages. Completed 2026-05-12. Added copy-to-clipboard actions for user and AI messages with transient copied state. Files touched: `frontend/app/dashboard/chats/[id]/page.tsx`.
-  - Add a copy-to-clipboard button to user messages.
-  - Add a copy-to-clipboard button to AI messages.
-  - Provide a subtle copied state without disrupting the chat layout.
-
-- [x] Add regenerate action to AI messages. Completed 2026-05-12. Added AI message regenerate action wired to backend pruning/regeneration endpoint. Files touched: `frontend/app/dashboard/chats/[id]/page.tsx`, `frontend/lib/api/services/ChatService.ts`.
-  - Add a `Regenerate` button to AI messages.
-  - On click, call the backend regenerate endpoint for that message index.
-  - Update the UI with the pruned active branch and regenerated response.
-  - Disable conflicting composer/message actions while regeneration is in progress.
-
-- [x] Add edit action to user messages. Completed 2026-05-12. Added inline user-message editing with cancel/save behavior and branch refresh from backend. Files touched: `frontend/app/dashboard/chats/[id]/page.tsx`, `frontend/lib/api/services/ChatService.ts`.
-  - Add an `Edit` button to user messages.
-  - Allow inline editing of the selected user message.
-  - On submit, call the backend edit endpoint with the updated text and message index.
-  - Update the UI with the pruned active branch and regenerated AI response.
-  - Provide cancel behavior that restores the original message without backend changes.
+- [ ] Add auth regression coverage.
+  - Frontend test for OAuth callback receiving `onboarding_required: true` and navigating to the expected onboarding route without calling `/me`.
+  - Frontend test for OAuth callback receiving normal JWT tokens and navigating to the dashboard/home after `/me` succeeds.
+  - Frontend test for duplicate callback effects so one authorization code is exchanged once.
+  - Backend/API test or documented contract check that OAuth users skip email verification and receive the expected onboarding status/token payload.
 
 ## Verification Requirements
 

@@ -1,16 +1,17 @@
 "use client";
 
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { InlineAlert, PrimaryButton } from "../../components/AuthUI";
 import OnboardingService from "@/lib/api/services/Onboarding.Service";
 import { useAuth, getOnboardingRoute } from "@/lib/api/auth/authContext";
 import { Routes } from "@/lib/api/FrontendRoutes";
-import { interpretServerError } from "@/lib/utils";
+import { interpretServerError, isInvalidOrExpiredOnboardingTokenError } from "@/lib/utils";
+import { storeAuthRedirectMessage } from "@/lib/api/auth/redirect";
 
 export default function ProfilePicturePage() {
   const router = useRouter();
-  const { onboardingToken, partialUser, updatePartialUser, exchangeOnboardingTokenForAuth } = useAuth();
+  const { onboardingToken, partialUser, updatePartialUser, exchangeOnboardingTokenForAuth, setOnboardingToken } = useAuth();
   const inputRef = useRef<HTMLInputElement>(null);
 
   const [file, setFile] = useState<File | null>(null);
@@ -22,6 +23,12 @@ export default function ProfilePicturePage() {
   const token = useMemo(() => {
     return onboardingToken || partialUser?.onboarding_token || "";
   }, [onboardingToken, partialUser?.onboarding_token]);
+
+  const redirectExpiredOnboarding = useCallback(() => {
+    setOnboardingToken(null);
+    storeAuthRedirectMessage("Your onboarding session expired. Please sign in again.");
+    router.replace(Routes.auth.login);
+  }, [router, setOnboardingToken]);
 
   useEffect(() => {
     if (!token) {
@@ -51,13 +58,15 @@ export default function ProfilePicturePage() {
           setPreview(null);
         }
       } catch (err) {
-        // Silently fail - we'll use partialUser data as fallback
-        console.error("Failed to fetch user data:", err);
+        if (isInvalidOrExpiredOnboardingTokenError(err)) {
+          redirectExpiredOnboarding();
+          return;
+        }
       }
     };
 
     fetchUserData();
-  }, [token, router, updatePartialUser]);
+  }, [redirectExpiredOnboarding, token, router, updatePartialUser]);
 
   const onFile = (nextFile: File | null) => {
     if (!nextFile) return;
@@ -102,6 +111,10 @@ export default function ProfilePicturePage() {
         router.replace(nextRoute);
       }
     } catch (err) {
+      if (isInvalidOrExpiredOnboardingTokenError(err)) {
+        redirectExpiredOnboarding();
+        return;
+      }
       const details = interpretServerError(err);
       setError(details[0] || "Could not upload profile picture.");
     } finally {

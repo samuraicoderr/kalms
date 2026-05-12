@@ -5,11 +5,12 @@ import { useRouter } from "next/navigation";
 import { InlineAlert, PrimaryButton } from "../../components/AuthUI";
 import { useAuth } from "@/lib/api/auth/authContext";
 import { Routes } from "@/lib/api/FrontendRoutes";
-import { interpretServerError } from "@/lib/utils";
+import { interpretServerError, isInvalidOrExpiredOnboardingTokenError } from "@/lib/utils";
+import { storeAuthRedirectMessage } from "@/lib/api/auth/redirect";
 
 export default function CompletePage() {
   const router = useRouter();
-  const { onboardingToken, exchangeOnboardingTokenForAuth } = useAuth();
+  const { onboardingToken, exchangeOnboardingTokenForAuth, setOnboardingToken } = useAuth();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -26,6 +27,13 @@ export default function CompletePage() {
         // Successfully exchanged tokens and logged in, redirect to home
         router.replace(Routes.home);
       } catch (err) {
+        if (isInvalidOrExpiredOnboardingTokenError(err)) {
+          setOnboardingToken(null);
+          storeAuthRedirectMessage("Your onboarding session expired. Please sign in again.");
+          router.replace(Routes.auth.login);
+          return;
+        }
+
         const details = interpretServerError(err);
         setError(details[0] || "Failed to complete onboarding. Please try logging in manually.");
         setLoading(false);
@@ -33,7 +41,7 @@ export default function CompletePage() {
     };
 
     completeOnboarding();
-  }, [onboardingToken, exchangeOnboardingTokenForAuth, router]);
+  }, [onboardingToken, exchangeOnboardingTokenForAuth, router, setOnboardingToken]);
 
   const goHome = () => {
     router.replace(Routes.home);

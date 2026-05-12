@@ -13,7 +13,6 @@ import React, {
   useCallback,
   useRef,
   ReactNode,
-  use,
 } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { create } from "zustand";
@@ -39,7 +38,6 @@ import {
   OAuthLoginResponse,
 } from "../types/auth";
 import { buildLoginRedirectPath } from "@/lib/api/auth/redirect";
-import { useLoginSuccess } from "@/app/auth/hooks/useLoginSuccess";
 
 
 export interface ApiErrorType {
@@ -245,7 +243,23 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({
     tokenManager.syncAuthPresenceCookie();
 
     try {
-      if (authUtils.isAuthenticated()) {
+      // If an OAuth exchange is currently in progress, avoid fetching
+      // `/me` here. The callback will finish the exchange and set
+      // onboarding/auth state explicitly. This prevents a race where a
+      // background `/me` request runs before the onboarding token is
+      // persisted.
+      const oauthExchange = (() => {
+        try {
+          return typeof sessionStorage !== 'undefined' && sessionStorage.getItem('oauth_exchange');
+        } catch (e) {
+          return null;
+        }
+      })();
+
+      if (oauthExchange) {
+        // Skip fetching the current user while an OAuth exchange is running.
+        // Leave user as null so onboarding flows can proceed.
+      } else if (authUtils.isAuthenticated()) {
         await fetchCurrentUser();
       } else {
         // Clear stale user data if token is invalid

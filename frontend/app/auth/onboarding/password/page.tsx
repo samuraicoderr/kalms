@@ -1,16 +1,17 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { InputField, InlineAlert, PasswordToggle, PrimaryButton } from "../../components/AuthUI";
 import OnboardingService from "@/lib/api/services/Onboarding.Service";
 import { useAuth, getOnboardingRoute } from "@/lib/api/auth/authContext";
 import { Routes } from "@/lib/api/FrontendRoutes";
-import { interpretServerError } from "@/lib/utils";
+import { interpretServerError, isInvalidOrExpiredOnboardingTokenError } from "@/lib/utils";
+import { storeAuthRedirectMessage } from "@/lib/api/auth/redirect";
 
 export default function PasswordPage() {
   const router = useRouter();
-  const { onboardingToken, partialUser, updatePartialUser, exchangeOnboardingTokenForAuth } = useAuth();
+  const { onboardingToken, partialUser, updatePartialUser, exchangeOnboardingTokenForAuth, setOnboardingToken } = useAuth();
 
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -22,6 +23,12 @@ export default function PasswordPage() {
   const token = useMemo(() => {
     return onboardingToken || partialUser?.onboarding_token || "";
   }, [onboardingToken, partialUser?.onboarding_token]);
+
+  const redirectExpiredOnboarding = useCallback(() => {
+    setOnboardingToken(null);
+    storeAuthRedirectMessage("Your onboarding session expired. Please sign in again.");
+    router.replace(Routes.auth.login);
+  }, [router, setOnboardingToken]);
 
   useEffect(() => {
     if (!token) {
@@ -43,13 +50,15 @@ export default function PasswordPage() {
           onboarding_flow: userData.onboarding_flow,
         });
       } catch (err) {
-        // Silently fail - we'll use partialUser data as fallback
-        console.error("Failed to fetch user data:", err);
+        if (isInvalidOrExpiredOnboardingTokenError(err)) {
+          redirectExpiredOnboarding();
+          return;
+        }
       }
     };
 
     fetchUserData();
-  }, [token, router, updatePartialUser]);
+  }, [redirectExpiredOnboarding, token, router, updatePartialUser]);
 
   const submit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -87,6 +96,10 @@ export default function PasswordPage() {
         router.replace(nextRoute);
       }
     } catch (err) {
+      if (isInvalidOrExpiredOnboardingTokenError(err)) {
+        redirectExpiredOnboarding();
+        return;
+      }
       const details = interpretServerError(err);
       setError(details[0] || "Could not set password. Please try again.");
     } finally {

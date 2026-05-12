@@ -1,18 +1,19 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { InputField, InlineAlert, PrimaryButton } from "../../components/AuthUI";
 import OnboardingService from "@/lib/api/services/Onboarding.Service";
 import { useAuth, getOnboardingRoute } from "@/lib/api/auth/authContext";
 import { Routes } from "@/lib/api/FrontendRoutes";
-import { interpretServerError } from "@/lib/utils";
+import { interpretServerError, isInvalidOrExpiredOnboardingTokenError } from "@/lib/utils";
+import { storeAuthRedirectMessage } from "@/lib/api/auth/redirect";
 
 const USERNAME_RE = /^[A-Za-z0-9_]{3,30}$/;
 
 export default function UsernamePage() {
   const router = useRouter();
-  const { onboardingToken, partialUser, updatePartialUser, exchangeOnboardingTokenForAuth } = useAuth();
+  const { onboardingToken, partialUser, updatePartialUser, exchangeOnboardingTokenForAuth, setOnboardingToken } = useAuth();
 
   const [username, setUsername] = useState(partialUser?.username || "");
   const [checking, setChecking] = useState(false);
@@ -23,6 +24,12 @@ export default function UsernamePage() {
   const token = useMemo(() => {
     return onboardingToken || partialUser?.onboarding_token || "";
   }, [onboardingToken, partialUser?.onboarding_token]);
+
+  const redirectExpiredOnboarding = useCallback(() => {
+    setOnboardingToken(null);
+    storeAuthRedirectMessage("Your onboarding session expired. Please sign in again.");
+    router.replace(Routes.auth.login);
+  }, [router, setOnboardingToken]);
 
   useEffect(() => {
     if (!token) {
@@ -46,13 +53,15 @@ export default function UsernamePage() {
         // Update form field with fetched data
         if (userData.username) setUsername(userData.username);
       } catch (err) {
-        // Silently fail - we'll use partialUser data as fallback
-        console.error("Failed to fetch user data:", err);
+        if (isInvalidOrExpiredOnboardingTokenError(err)) {
+          redirectExpiredOnboarding();
+          return;
+        }
       }
     };
 
     fetchUserData();
-  }, [token, router, updatePartialUser]);
+  }, [redirectExpiredOnboarding, token, router, updatePartialUser]);
 
   useEffect(() => {
     if (!username || !USERNAME_RE.test(username)) {
@@ -65,7 +74,11 @@ export default function UsernamePage() {
       try {
         const result = await OnboardingService.checkUsername(username, token);
         setAvailable(result.available);
-      } catch {
+      } catch (err) {
+        if (isInvalidOrExpiredOnboardingTokenError(err)) {
+          redirectExpiredOnboarding();
+          return;
+        }
         setAvailable(null);
       } finally {
         setChecking(false);
@@ -73,7 +86,7 @@ export default function UsernamePage() {
     }, 350);
 
     return () => clearTimeout(timer);
-  }, [username, token]);
+  }, [redirectExpiredOnboarding, username, token]);
 
   const submit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -106,6 +119,10 @@ export default function UsernamePage() {
         router.replace(nextRoute);
       }
     } catch (err) {
+      if (isInvalidOrExpiredOnboardingTokenError(err)) {
+        redirectExpiredOnboarding();
+        return;
+      }
       const details = interpretServerError(err);
       setError(details[0] || "Could not save username. Please try another one.");
     } finally {

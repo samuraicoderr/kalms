@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import React, { Suspense, useState } from "react";
+import React, { Suspense, useEffect, useState } from "react";
 import { motion } from "motion/react";
 import AuthDivider from "../components/AuthDivider";
 import OAuthButtons from "../components/OAuthButtons";
@@ -19,6 +19,7 @@ import { interpretServerError } from "@/lib/utils";
 import { AuthService } from "@/lib/api/services/AuthService";
 import { useLoginSuccess } from "../hooks/useLoginSuccess";
 import { OAuthLoginResponse } from "@/lib/api/types/auth";
+import { consumeAuthRedirectMessage } from "@/lib/api/auth/redirect";
 
 interface FormErrors {
   email?: string;
@@ -56,6 +57,13 @@ function LoginPageContent() {
   };
 
   useLoginSuccess(loginResponse);
+
+  useEffect(() => {
+    const redirectMessage = consumeAuthRedirectMessage();
+    if (redirectMessage) {
+      setFormMessage(redirectMessage);
+    }
+  }, []);
   
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
