@@ -1,6 +1,6 @@
 # Kalms
 
-Kalms is an AI-powered student mental wellness platform that helps university users track mood, complete validated assessments, review historical wellbeing trends, and receive guided, compassionate support.
+Kalms is an AI-powered student mental wellness platform that helps university users track mood, complete validated assessments, review historical wellbeing trends, and receive guided, compassionate support
 
 > The platform is built as a full-stack app with a Next.js frontend and a Django backend.
 
